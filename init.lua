@@ -27,7 +27,6 @@ core.register_on_shutdown(function()
     Industria.controllers:serialize();
 end)
 
-
 core.register_node("industria:plcbase", {
     description = "Base PLC",
     tiles = {
