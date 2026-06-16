@@ -1,39 +1,75 @@
-Industria.ST.saveUnit = function(unit)
+local fnresult = Industria.commons.fnresult;
+
+-- Saves a Control Unit environment file containing all variables and values
+-- to be able to resume operetion on the next load of the game.
+--
+-- Parameters:
+-- unit : Unit {unitd_id, owner, reference_program, last_env}
+--
+-- Returns: true/false based on success or error
+Industria.files.saveUnitEnvironment = function(unit)
+    --Controlla che abbia i campi utilizzati
     if unit == nil or unit.reference_program == nil or unit.last_env == nil then
-        return false;
+        return false; -- Se non ha i campi necessari
     end
+    --Apre il file di scrittura: cartella_mondo/industriadt/idunità_proprietario.st.env
     local f, err = io.open(Industria.datapath .. "/" .. unit.reference_program .. ".env", "w");
     if err or f == nil then
-        return false;
+        return false; --Fallito il salvataggio
     end
-
+    --Serializza la tabella dell'environment
     f:write(core.serialize(unit.last_env));
     f:flush();
     f:close();
+    return true;
 end
 
-Industria.ST.initUnit = function(unit, fresh_init)
+---Writes out the Unit Code (ST File) to the file referenced by: unit.reference_program
+---@param unit Unit
+---@param text string
+---@return Result<nil>
+Industria.files.saveUnitCode = function(unit, text)
+    --Controlla che abbia i campi utilizzati
     if unit == nil or unit.reference_program == nil or unit.last_env == nil then
-        return false;
+        return fnresult(false, "Unit is invalid", nil); -- Se non ha i campi necessari
     end
 
-    local code = Industria.ST.loadCode(Industria.datapath .. "/" .. unit.reference_program);
-    local interpreter = Industria.ST.interpret(code);
-    if interpreter == nil then
-        return false;
+    --Apre il file di scrittura: cartella_mondo/industriadt/idunità_proprietario.st
+    local f, err = io.open(Industria.datapath .. "/" .. unit.reference_program, "w");
+    if err or f == nil then
+        return fnresult(false, "File not written: " .. err, nil);
     end
-    
-    Industria.controllers:setUnitInterpreter(unit, interpreter);
-    interpreter:init();
+    --Scrivi il codice
+    f:write(text);
+    f:flush();
+    f:close();
+    return fnresult(true, nil, nil);
+end
 
-    if fresh_init then
-        local f, err = io.open(Industria.datapath .. "/" .. unit.reference_program .. ".env", "r");
-        if err or f == nil then
-            return false;
-        end
-        unit.last_env = core.deserialize(f:read("a"), true);
-        unit.interpreter:setEnv(unit.last_env);
-        f:close();
+---Deletes the .env file associated with a Unit. This method should be called when the unit is removed from the world
+---@param unit Unit
+---@return Result<number>
+Industria.files.deleteUnitEnvironment = function(unit)
+    --Controlla che abbia i campi utilizzati
+    if unit == nil or unit.reference_program == nil or unit.last_env == nil then
+        return fnresult(false, "Unit is invalid", nil); -- Se non ha i campi necessari
     end
-    return true;
+    --Elimina il file: cartella_mondo/industriadt/idunità_proprietario.st.env
+    local ok, msg, code =
+        os.remove(Industria.datapath .. "/" .. unit.reference_program .. ".env");
+    return fnresult(not not ok, msg, code);
+end
+
+---Deletes the .st file associated with a Unit. This method should be called when the unit is removed from the world
+---@param unit Unit
+---@return Result<number>
+Industria.files.deleteUnitCode = function(unit)
+    --Controlla che abbia i campi utilizzati
+    if unit == nil or unit.reference_program == nil or unit.last_env == nil then
+        return fnresult(false, "Unit is invalid", nil); -- Se non ha i campi necessari
+    end
+    --Elimina il file: cartella_mondo/industriadt/idunità_proprietario.st
+    local ok, msg, code =
+        os.remove(Industria.datapath .. "/" .. unit.reference_program);
+    return fnresult(not not ok, msg, code);
 end

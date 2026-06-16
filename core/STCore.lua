@@ -27,6 +27,8 @@
 --  UTILITÀ GLOBALI
 -- ────────────────────────────────────────────────────────────
 
+local fnresult = Industria.commons.fnresult;
+
 -- Genera un errore di runtime con prefisso uniforme "[RUNTIME]".
 -- Il livello 2 fa puntare il messaggio al chiamante, non qui dentro.
 local function runtime_error(msg)
@@ -580,6 +582,9 @@ end
 -- Protegge contro loop infiniti senza dipendere da os.clock().
 local MAX_STEPS = 1000000
 
+--- Genera un nuovo interprete dato l'AST
+--- @param ast any
+--- @return Interpreter
 local function new_interpreter(ast)
     -- Ambiente di esecuzione: mappa nome variabile → { value, dtype }.
     -- Viene popolato da interp:run() prima di eseguire il corpo.
@@ -898,18 +903,24 @@ local function new_interpreter(ast)
     -- ── API pubblica dell'interprete ─────────────────────────
     -- Esposta come oggetto con due metodi separati che rispecchiano
     -- le due fasi di vita di un PLC reale.
-    local interp       = {}
 
+    ---@class Interpreter
+    local interp = {
+        _ast = ast,
+        cycle_count = 0,
+        steps_cycle = 0,
+        steps_total = 0
+    }
     -- Riferimento interno all'AST, memorizzato da init() e riusato da cycle().
     -- Evita di passare l'AST ad ogni chiamata di cycle().
-    interp._ast        = ast
-
+    --interp._ast        = ast
     -- Contatori accessibili dall'esterno dopo ogni cycle()
-    interp.cycle_count = 0 -- numero totale di cicli completati
-    interp.steps_cycle = 0 -- istruzioni eseguite nell'ultimo ciclo
-    interp.steps_total = 0 -- istruzioni totali dall'avvio
+    --interp.cycle_count = 0 -- numero totale di cicli completati
+    --interp.steps_cycle = 0 -- istruzioni eseguite nell'ultimo ciclo
+    --interp.steps_total = 0 -- istruzioni totali dall'avvio
 
     -- ── interp:init(ast_in) ──────────────────────────────────
+
     -- Fase di POWER-ON / inizializzazione.
     -- Va chiamata UNA SOLA VOLTA prima del loop di scan.
     --
@@ -950,17 +961,20 @@ local function new_interpreter(ast)
     end
 
     -- ── interp:cycle() ───────────────────────────────────────
-    -- Esegue UN ciclo di scansione: percorre tutti gli statement
-    -- del corpo del PROGRAM dall'inizio alla fine, esattamente come
-    -- farebbe il task ciclico di un PLC reale.
+
+    ---Esegue UN ciclo di scansione: percorre tutti gli statement
+    ---del corpo del PROGRAM dall'inizio alla fine, esattamente come
+    ---farebbe il task ciclico di un PLC reale.
     --
-    -- Le variabili in `env` NON vengono reinizializzate: i valori
-    -- scritti in un ciclo sono visibili nel ciclo successivo.
-    -- Questo è il comportamento fondamentale che permette di
-    -- implementare logica stateful (contatori, macchine a stati, ecc.)
+    ---Le variabili in `env` NON vengono reinizializzate: i valori
+    ---scritti in un ciclo sono visibili nel ciclo successivo.
+    ---Questo è il comportamento fondamentale che permette di
+    ---implementare logica stateful (contatori, macchine a stati, ecc.)
     --
-    -- Restituisce: ok (bool), err (stringa o nil), env, stats
-    --   stats = { cycle=N, steps_this=M, steps_total=T }
+    ---@return boolean ok
+    ---@return string|nil err
+    ---@return Environment env
+    ---@return {cycle:number,steps_this:number,steps_total:number} stats
     function interp:cycle()
         -- Reset del contatore di istruzioni per questo ciclo.
         -- `steps` (upvalue della closure) viene usato da exec() per
@@ -990,9 +1004,11 @@ local function new_interpreter(ast)
     end
 
     -- ── interp:setEnv(newEnv) ───────────────────────────────────────
-    -- Imposta le variabili d'ambiente: se l'ambiente corrente è nullo 
-    -- allora copia direttamente il nuovo ambiente, altrimenti copia solo
-    -- i valori che corrispondono a variabili presenti nell'ambiente.
+
+    --- Imposta le variabili d'ambiente: se l'ambiente corrente è nullo
+    --- allora copia direttamente il nuovo ambiente, altrimenti copia solo
+    --- i valori che corrispondono a variabili presenti nell'ambiente.
+    ---@param newEnv Environment|nil il nuovo ambiente da impostare (se nil usa quello interno)
     function interp:setEnv(newEnv)
         if newEnv ~= nil then
             if env == nil or env == {} then
@@ -1010,12 +1026,15 @@ local function new_interpreter(ast)
     return interp
 end
 
-Industria.ST.interpret = function(code_source)
+---Genera l'interprete dato il testo del file ST. Il file deve contenere sia le dichiarazioni di variabili sia il codice.
+---@param code_source string Testo contentenuto nel file .ST associato ad una unit
+---@return Interpreter|nil #Restituisce l'interprete se viene completato correttamente, altrimenti nil
+Industria.ST.interpCode = function(code_source)
     -- ── Fase 1: Tokenizzazione ───────────────────────────────
     local lexer = new_lexer(code_source)
     local ok, res = pcall(function() return lexer:tokenize() end)
     if not ok then
-        io.stderr:write("[LESSICAL] " .. tostring(res) .. "\n");
+        error("[LESSICAL] " .. tostring(res) .. "\n");
         return nil;
     end
     local tokens = res
@@ -1024,7 +1043,7 @@ Industria.ST.interpret = function(code_source)
     local parser = new_parser(tokens)
     local ok2, res2 = pcall(function() return parser:parse() end)
     if not ok2 then
-        io.stderr:write("[SYNTACTIC] " .. tostring(res2) .. "\n");
+        error("[SYNTACTIC] " .. tostring(res2) .. "\n");
         return nil;
     end
     local ast = res2
@@ -1043,12 +1062,14 @@ Industria.ST.interpret = function(code_source)
     return interp;
 end
 
+---Loads code from an ST file
+---@param filename string The path to the file
+---@return Result<string|nil>
 Industria.ST.loadCode = function(filename)
     local f, err = io.open(filename, "r")
     if not f then
-        io.stderr:write("Impossibile aprire: " .. tostring(err) .. "\n")
-        return nil;
+        return fnresult(false, "File not opened: " .. tostring(err) .. "\n", nil);
     end
     local source = f:read("*a"); f:close();
-    return source;
+    return fnresult(true, nil, source);
 end
