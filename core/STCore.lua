@@ -286,7 +286,7 @@ local function new_parser(tokens)
     local function expect(tt)
         local t = cur()
         if t.type ~= tt then
-            error(("Riga %d: atteso '%s', trovato '%s' ('%s')")
+            error(("Row %d: expected '%s', found '%s' ('%s')")
                 :format(t.line, tt, t.type, tostring(t.value)), 2)
         end
         return advance()
@@ -339,7 +339,7 @@ local function new_parser(tokens)
             advance(); local e = parse_expr(); expect("RPAREN")
             return node("Group", { expr = e })
         else
-            error(("Riga %d: espressione attesa, trovato '%s'"):format(t.line, t.type))
+            error(("Row %d: expected expression, found '%s'"):format(t.line, t.type))
         end
     end
 
@@ -493,7 +493,7 @@ local function new_parser(tokens)
                 error(("Riga %d: ':=' o '(' attesi dopo '%s'"):format(t.line, t.value))
             end
         else
-            error(("Riga %d: istruzione attesa, trovato '%s'"):format(t.line, t.type))
+            error(("Row %d: expected instruction, found '%s'"):format(t.line, t.type))
         end
     end
 
@@ -514,7 +514,7 @@ local function new_parser(tokens)
         elseif t.type == "IDENT" then
             advance(); return t.value
         else
-            error(("Riga %d: tipo atteso"):format(t.line))
+            error(("Row %d: expected type"):format(t.line))
         end
     end
 
@@ -588,6 +588,7 @@ local MAX_STEPS = 1000000
 local function new_interpreter(ast)
     -- Ambiente di esecuzione: mappa nome variabile → { value, dtype }.
     -- Viene popolato da interp:run() prima di eseguire il corpo.
+    ---@type Environment
     local env = {}
 
     -- Contatore globale di istruzioni eseguite (incrementato da exec()).
@@ -621,7 +622,8 @@ local function new_interpreter(ast)
         PRINT         = function(args)
             local parts = {}
             for _, a in ipairs(args) do table.insert(parts, val_to_str(a)) end
-            print(table.concat(parts, "\t"))
+            --print(table.concat(parts, "\t"))
+            Industria.runtime.print(table.concat(parts, "\t"));
             return nil
         end,
 
@@ -933,6 +935,8 @@ local function new_interpreter(ast)
     function interp:init(ast_in)
         if ast_in ~= nil then
             self._ast = ast_in -- memorizza l'AST per i cicli futuri
+        else
+            ast_in = self._ast;
         end
 
         for _, d in ipairs(ast_in.var_decls) do
@@ -1014,7 +1018,7 @@ local function new_interpreter(ast)
             if env == nil or env == {} then
                 env = newEnv;
             else
-                for k, val in ipairs(env) do
+                for k, val in pairs(env) do
                     if newEnv[k] ~= nil then
                         env[k] = newEnv[k];
                     end
@@ -1023,19 +1027,35 @@ local function new_interpreter(ast)
         end
     end
 
+    ---Restituisce l'environment corrente dell'interprete
+    ---@return Environment
+    function interp:getEnv()
+        return env;
+    end
+
     return interp
 end
 
+local fnresult = Industria.commons.fnresult;
+
+
+
 ---Genera l'interprete dato il testo del file ST. Il file deve contenere sia le dichiarazioni di variabili sia il codice.
 ---@param code_source string Testo contentenuto nel file .ST associato ad una unit
----@return Interpreter|nil #Restituisce l'interprete se viene completato correttamente, altrimenti nil
-Industria.ST.interpCode = function(code_source)
+---@param unit_code string Il codice dell'unità, per gli errori
+---@return Result<Interpreter|nil> #Restituisce l'interprete se viene completato correttamente, altrimenti nil
+Industria.ST.interpCode = function(code_source, unit_code)
+    local rterror = function(message)
+        Industria.runtime:registerError(unit_code, message);
+    end
+
     -- ── Fase 1: Tokenizzazione ───────────────────────────────
     local lexer = new_lexer(code_source)
     local ok, res = pcall(function() return lexer:tokenize() end)
     if not ok then
-        error("[LESSICAL] " .. tostring(res) .. "\n");
-        return nil;
+        local msg = "(LESSICAL) " .. tostring(res) .. "\n";
+        rterror(msg);
+        return fnresult(false, msg, nil);
     end
     local tokens = res
 
@@ -1043,8 +1063,9 @@ Industria.ST.interpCode = function(code_source)
     local parser = new_parser(tokens)
     local ok2, res2 = pcall(function() return parser:parse() end)
     if not ok2 then
-        error("[SYNTACTIC] " .. tostring(res2) .. "\n");
-        return nil;
+        local msg = "(SYNTACTIC) " .. tostring(res2) .. "\n";
+        rterror(msg);
+        return fnresult(false, msg, nil);
     end
     local ast = res2
 
@@ -1059,7 +1080,7 @@ Industria.ST.interpCode = function(code_source)
         local env_res = interp:init(ast) -- alloca env; NON esegue il corpo del PROGRAM
         local ok3, err3, cur_env, stats = interp:cycle()
     ]]
-    return interp;
+    return fnresult(true, nil, interp);
 end
 
 ---Loads code from an ST file

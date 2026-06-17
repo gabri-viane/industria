@@ -8,22 +8,24 @@ dofile(path .. "/core/init.lua");
 dofile(path .. "/core/STCore.lua");
 dofile(path .. "/core/STFiles.lua");
 dofile(path .. "/core/controllers.lua");
+dofile(path .. "/core/runtime.lua");
 dofile(path .. "/gui/formspecs.lua");
 
 Industria.datapath = worldmotd_path .. "/industriadt";
 if not (core.path_exists(Industria.datapath)) then
     core.mkdir(Industria.datapath);
 end
-Industria.controllers:deserialize();
+
 
 core.register_chatcommand("tmp", {
     func = function(name, param)
-
+        core.chat_send_all(core.serialize(Industria.controllers.units));
     end
 });
 
 ---On exit save controllers data
 core.register_on_shutdown(function()
+    Industria.runtime:saveCurrentEnv();
     Industria.controllers:serialize();
 end)
 
@@ -57,7 +59,7 @@ core.register_node("industria:plcbase", {
                 core.chat_send_player(clicker:get_player_name(), res.msg);
                 return;
             end
-            Industria.formspecs:showEditor(clicker:get_player_name(), plcid);
+            Industria.formspecs:showUnitMainForm(clicker:get_player_name(), plcid);
         end
     end,
     after_dig_node = function(pos, oldnode, oldmetadata, digger)
@@ -79,3 +81,11 @@ core.register_node("industria:plcbase", {
         end
     end
 });
+
+local loadres = Industria.controllers:deserialize();
+
+if not loadres.completed then
+    core.chat_send_all(loadres.msg);
+else
+    core.chat_send_all("Controllers loaded");
+end

@@ -34,7 +34,8 @@ Industria.commons = {
             error("trim_trailing_spaces: expected a string, got " .. type(str))
         end
         -- Remove trailing spaces using pattern matching
-        return str:gsub("%s+$", "");
+        local res, count =  str:gsub("%s+$", "");
+        return res;
     end,
     indexof = function(tbl, value)
         local index = {}

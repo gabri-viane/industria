@@ -1,5 +1,7 @@
 local fnresult = Industria.commons.fnresult;
 
+Industria.files.STtemplate = "(* ============================================================\n   Usage Example: Variable declaration + instructions\n   ============================================================ *)\n\nPROGRAM TemplateProgram\n\nVAR\n    (* Variables here *)\n    counter      : INT   := 0;\n    realNumber      : REAL   := 0;\n    SensorInput :  BOOL := 0;\nEND_VAR\nrealNumber := realNumber+0.1;\nIF SensorInput THEN\n	counter := counter +1;\n    PRINT('VALUE:');\n    PRINT('VALUE:');\nEND_IF\n\nEND_PROGRAM";
+
 -- Saves a Control Unit environment file containing all variables and values
 -- to be able to resume operetion on the next load of the game.
 --

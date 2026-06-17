@@ -8,8 +8,12 @@ Industria.controllers = {
     ---Contiene le unità con il codice associato nel formato:
     ---{codice1={...},codice2={...}}
     ---@type table<unit_code,Unit>
+    units = {}
+};
+Industria.runtime = {
+    ---Contiene tutte le unità caricate/create: se un unità non è
+    ---presente in questa tabella allora non può essere avviata a runtime
+    ---
+    ---@type table<unit_code,RTInfo> Tabella che associa unit_code a {enabled,interpreter}
     units = {},
-    --- Contiene gli interpreti (instanze) he gestiscono le unitid
-    ---@type table<unit_code,Interpreter|{}>
-    interpreters = {} -- {codice1={...}}
 };
