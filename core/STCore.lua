@@ -32,7 +32,7 @@ local fnresult = Industria.commons.fnresult;
 -- Genera un errore di runtime con prefisso uniforme "[RUNTIME]".
 -- Il livello 2 fa puntare il messaggio al chiamante, non qui dentro.
 local function runtime_error(msg)
-    error("[RUNTIME] " .. msg, 2)
+    error({ msg = "[RUNTIME] " .. msg }, 2)
 end
 
 
@@ -286,8 +286,10 @@ local function new_parser(tokens)
     local function expect(tt)
         local t = cur()
         if t.type ~= tt then
-            error(("Row %d: expected '%s', found '%s' ('%s')")
-                :format(t.line, tt, t.type, tostring(t.value)), 2)
+            error({
+                msg = ("Row %d: expected '%s', found '%s' ('%s')")
+                    :format(t.line, tt, t.type, tostring(t.value))
+            }, 2)
         end
         return advance()
     end
@@ -339,7 +341,7 @@ local function new_parser(tokens)
             advance(); local e = parse_expr(); expect("RPAREN")
             return node("Group", { expr = e })
         else
-            error(("Row %d: expected expression, found '%s'"):format(t.line, t.type))
+            error({ msg = ("Row %d: expected expression, found '%s'"):format(t.line, t.type) })
         end
     end
 
@@ -490,10 +492,10 @@ local function new_parser(tokens)
                 expect("RPAREN"); expect("SEMI")
                 return node("FuncCallStmt", { name = t.value, args = args })
             else
-                error(("Riga %d: ':=' o '(' attesi dopo '%s'"):format(t.line, t.value))
+                error({ msg = ("Row %d: ':=' or '(' expected after '%s'"):format(t.line, t.value) })
             end
         else
-            error(("Row %d: expected instruction, found '%s'"):format(t.line, t.type))
+            error({ msg = ("Row %d: expected instruction, found '%s'"):format(t.line, t.type) })
         end
     end
 
@@ -514,7 +516,7 @@ local function new_parser(tokens)
         elseif t.type == "IDENT" then
             advance(); return t.value
         else
-            error(("Row %d: expected type"):format(t.line))
+            error({ msg = ("Row %d: expected type"):format(t.line) })
         end
     end
 
@@ -719,7 +721,7 @@ local function new_interpreter(ast)
             -- Lettura di variabile: cerca nell'ambiente, errore se assente
             local entry = env[n.name]
             if entry == nil then
-                runtime_error("Variabile non inizializzata: '" .. n.name .. "'")
+                runtime_error("Variable not initialized: '" .. n.name .. "'")
             end
             return entry.value
         elseif n.kind == "Group" then
@@ -755,7 +757,7 @@ local function new_interpreter(ast)
             elseif op == "*" then
                 return l * r
             elseif op == "/" then
-                if r == 0 then runtime_error("Divisione per zero") end
+                if r == 0 then runtime_error("Division by zero") end
                 -- Divisione intera (floor) se entrambi gli operandi sono interi
                 -- (math.type è disponibile da Lua 5.3; su versioni precedenti
                 --  si fa sempre divisione floating-point).
@@ -782,7 +784,7 @@ local function new_interpreter(ast)
             local fname = n.name:upper()
             local builtin = BUILTINS[fname]
             if not builtin then
-                runtime_error("Funzione sconosciuta: '" .. n.name .. "'")
+                runtime_error("Unknown function: '" .. n.name .. "'")
             end
             -- Valuta ricorsivamente tutti gli argomenti prima della chiamata
             local args = {}
@@ -792,7 +794,7 @@ local function new_interpreter(ast)
             return builtin(args)
         end
 
-        runtime_error("Nodo espressione sconosciuto: " .. tostring(n.kind))
+        runtime_error("Unknown expression node: " .. tostring(n.kind))
     end
 
     -- ── Esecutore di istruzioni ──────────────────────────────
@@ -802,14 +804,14 @@ local function new_interpreter(ast)
         -- Incrementa il contatore e controlla il limite di sicurezza
         steps = steps + 1
         if steps > MAX_STEPS then
-            runtime_error(("Limite istruzioni raggiunto (%d). Loop infinito?"):format(MAX_STEPS))
+            runtime_error(("Instruction limit reached (%d). Infinit loop?"):format(MAX_STEPS))
         end
 
         if n.kind == "Assign" then
             local v = eval(n.value)
             local entry = env[n.target]
             if not entry then
-                runtime_error("Assegnazione a variabile non dichiarata: '" .. n.target .. "'")
+                runtime_error("Assignment to a not-declared variable: '" .. n.target .. "'")
             end
             -- Coercizione al tipo dichiarato nella sezione VAR.
             -- Evita che un calcolo intermedio con REAL "contamini" una
@@ -830,7 +832,7 @@ local function new_interpreter(ast)
             local fname = n.name:upper()
             local builtin = BUILTINS[fname]
             if not builtin then
-                runtime_error("Funzione sconosciuta: '" .. n.name .. "'")
+                runtime_error("Unknown function: '" .. n.name .. "'")
             end
             local args = {}
             for _, a in ipairs(n.args) do table.insert(args, eval(a)) end
@@ -862,9 +864,9 @@ local function new_interpreter(ast)
             -- BY default = 1; convertito a intero (il contatore FOR è sempre INT)
             local by_v   = n.by and eval(n.by) or 1
             by_v         = math.floor(by_v)
-            if by_v == 0 then runtime_error("FOR: incremento (BY) non può essere 0") end
+            if by_v == 0 then runtime_error("FOR: increment (BY) can't be 0") end
             local entry = env[n.var]
-            if not entry then runtime_error("Variabile di ciclo non dichiarata: '" .. n.var .. "'") end
+            if not entry then runtime_error("Cycle's variable not defined: '" .. n.var .. "'") end
             local i = math.floor(from_v)
             local limit = math.floor(to_v)
             -- La condizione di terminazione dipende dal segno di BY:
@@ -887,7 +889,7 @@ local function new_interpreter(ast)
                 for _, s in ipairs(n.body) do exec(s) end
             end
         else
-            runtime_error("Nodo statement sconosciuto: " .. tostring(n.kind))
+            runtime_error("Unknown statement node: " .. tostring(n.kind))
         end
     end
 
@@ -1036,10 +1038,6 @@ local function new_interpreter(ast)
     return interp
 end
 
-local fnresult = Industria.commons.fnresult;
-
-
-
 ---Genera l'interprete dato il testo del file ST. Il file deve contenere sia le dichiarazioni di variabili sia il codice.
 ---@param code_source string Testo contentenuto nel file .ST associato ad una unit
 ---@param unit_code string Il codice dell'unità, per gli errori
@@ -1053,7 +1051,7 @@ Industria.ST.interpCode = function(code_source, unit_code)
     local lexer = new_lexer(code_source)
     local ok, res = pcall(function() return lexer:tokenize() end)
     if not ok then
-        local msg = "(LESSICAL) " .. tostring(res) .. "\n";
+        local msg = "(LESSICAL) " .. tostring(res.msg) .. "\n";
         rterror(msg);
         return fnresult(false, msg, nil);
     end
@@ -1063,7 +1061,7 @@ Industria.ST.interpCode = function(code_source, unit_code)
     local parser = new_parser(tokens)
     local ok2, res2 = pcall(function() return parser:parse() end)
     if not ok2 then
-        local msg = "(SYNTACTIC) " .. tostring(res2) .. "\n";
+        local msg = "(SYNTACTIC) " .. tostring(res2.msg) .. "\n";
         rterror(msg);
         return fnresult(false, msg, nil);
     end
