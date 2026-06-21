@@ -47,7 +47,7 @@ function Industria.controllers:deserialize()
             core.chat_send_all("Loaded unit: \'"..unit_code.."\'");
         else
             core.chat_send_all("Failed to load unit: \'"..unit_code.."\'");
-        end]]--
+        end]] --
     end
 
     return fnresult(true, nil, self);
@@ -59,7 +59,11 @@ end
 ---@return Result<Unit|nil> #In the filed "data" the value is the newly created Unit
 function Industria.controllers:addUnit(unit_id, owner)
     -- Crea il codice del plc: idunità_nomeproprietario
-    local unit_code = unit_id .. "_" .. owner;
+    local unit_code = Industria.units.toUnitCode(unit_id, owner);
+    -- Controllo se non ho generato il codice
+    if unit_code == nil then
+        return fnresult(false, "UnitCode not valid");
+    end
     -- Se esiste già un'unità allora ritorna un'errore
     if self.units[unit_code] ~= nil then
         return fnresult(false, "Unit already exists");
@@ -79,7 +83,8 @@ function Industria.controllers:addUnit(unit_id, owner)
         owner = owner,                          -- owner of the unit
         reference_program = unit_code .. ".st", -- refrenced code file
         last_env = {},                          -- last env used
-        enabled = false
+        enabled = false,
+        protected = false                       --solo l'owner del PLC può aprirlo
     };
     --Aggiungi l'unità
     self.units[unit_code] = unit;
@@ -87,20 +92,17 @@ function Industria.controllers:addUnit(unit_id, owner)
     return fnresult(true, "Unit created with code " .. unit_code, unit);
 end
 
---- Returns a Unit, if present, binded to a player, knowing the unit's ID.
----@param unit_id string The unit id, must be unique
----@param owner string The player name
+--- Returns a Unit, if present, binded to a player, knowing the unit's Code (ID+Owner name).
+---@param unit_code unit_code|nil The unit id, must be unique
 ---@return Result<Unit|nil> #If the function is completed then the field "data" contains the Unit
-function Industria.controllers:getUnit(unit_id, owner)
+function Industria.controllers:getUnit(unit_code)
     --Se sono nulli allora non provare nemmeno a cercarla
-    if not unit_id or not owner then
+    if not unit_code then
         return fnresult(false, "Owner or UnitID is null");
     end
-    --Costruisce la stringa di come è salvata l'unità
-    local unit_code = unit_id .. "_" .. owner;
     --Se non esiste allora esci
     if self.units[unit_code] == nil then
-        return fnresult(false, "Unit doesn't exists: '"..unit_code.."'");
+        return fnresult(false, "Unit doesn't exists: '" .. unit_code .. "'");
     end
 
     return fnresult(true, nil, self.units[unit_code]);
@@ -135,7 +137,7 @@ function Industria.controllers:removeController(unit_id, owner)
 
     --Rimuove la unit
     self.units[unit_code] = nil;
-    
+
     --Rimuove l'interprete/unità dal RT
     Industria.runtime:removeUnit(unit);
 

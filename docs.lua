@@ -10,6 +10,6 @@
 ---@alias VarEnv {value: any, dtype: any} Variabile d'ambiente: valore e tipo (usata in interprete)
 ---@alias Environment table<string,VarEnv> Tabella di variabili-valori
 
----@alias Unit {unit_id : unit_id, owner : owner, reference_program : reference_program, last_env : Environment, enabled:boolean} Unità/Controllore
+---@alias Unit {unit_id : unit_id, owner : owner, reference_program : reference_program, last_env : Environment, enabled : boolean, protected : boolean} Unità/Controllore
 
 ---@alias RTInfo {enabled:boolean,interp: Interpreter|nil,errors:string[]}

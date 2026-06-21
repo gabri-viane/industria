@@ -17,7 +17,7 @@ end
 
 --Funzione di callback per l'editor di codice ST
 function Industria.formspecs.callbacks:STEditorCallback(player_name, fields)
-    local plcid = Industria.formspecs:getPlayerStatus(player_name).data;
+    local unitcode = Industria.formspecs:getPlayerStatus(player_name).data;
 
     local closeFS = function()
         Industria.formspecs:setPlayerStatus(player_name, nil, nil);
@@ -28,14 +28,29 @@ function Industria.formspecs.callbacks:STEditorCallback(player_name, fields)
         end
     end
 
-    if plcid == nil or not (type(plcid) == "string") then
-        core.chat_send_player(player_name, "No Unit ID");
+    ---Controlla di chi è l'unità
+    ---@param unit Unit
+    ---@return boolean #Se true allora il giocatore può gestire l'unità
+    local checkOwnership = function(unit)
+        if unit.protected and unit.owner ~= player_name then
+            return false;
+        end
+        return true;
+    end
+
+    if unitcode == nil or not (type(unitcode) == "string") then
+        core.chat_send_player(player_name, "No Unit Code");
         closeFS();
         return;
     end
 
     if fields.saveCode then
-        local unit = Industria.controllers:getUnit(plcid, player_name);
+        local unit = Industria.controllers:getUnit(unitcode);
+        --Controllo se il giocatore può accedere all'unità
+        if not checkOwnership(unit.data) then
+            closeFS();
+            return;
+        end
         --Salvo il codice
         if Industria.files.saveUnitCode(unit.data, fields.CodeEditor) then
             --Chiudo il formspec
@@ -46,7 +61,12 @@ function Industria.formspecs.callbacks:STEditorCallback(player_name, fields)
         return;
     end
     if fields.compileCode then
-        local unit = Industria.controllers:getUnit(plcid, player_name);
+        local unit = Industria.controllers:getUnit(unitcode);
+        --Controllo se il giocatore può accedere all'unità
+        if not checkOwnership(unit.data) then
+            closeFS();
+            return;
+        end
         --Salvo il codice
         if Industria.files.saveUnitCode(unit.data, fields.CodeEditor) then
             --Compilo
@@ -68,13 +88,18 @@ function Industria.formspecs.callbacks:STEditorCallback(player_name, fields)
     end
 end
 
---- Displays the Code Editor Formspec to the player
----@param playername owner Name of the user
----@param unit_id unit_id The UnitID
-function Industria.formspecs:showEditor(playername, unit_id)
-    local res = Industria.controllers:getUnit(unit_id, playername);
+--- Displays the Code Editor Formspec to the player if the player can edit or view the Unit.
+---@param player_name owner Name of the user to show the formspec to.
+---@param unit_code unit_code The UnitCode
+function Industria.formspecs:showEditor(player_name, unit_code)
+    local res = Industria.controllers:getUnit(unit_code);
 
     if res.completed then
+        --Controllo se il giocatore può accedere all'unità
+        if res.data.protected and res.data.owner ~= player_name then
+            return;
+        end
+
         local code = Industria.ST.loadCode(Industria.datapath .. "/" .. res.data.reference_program);
         if not code.completed then
             --non ho trovato il codice/file: lo devo creare
@@ -88,13 +113,13 @@ function Industria.formspecs:showEditor(playername, unit_id)
                 return;
             end
         end
-        self:setCurrentCallback(playername,
+        self:setCurrentCallback(player_name,
             function(pname, fields)
                 Industria.formspecs.callbacks:STEditorCallback(pname, fields);
             end);
-        self:setPlayerStatus(playername, FSKeyCode, unit_id);
-        core.show_formspec(playername, FSKeyCode, STCodeEditor(code.data));
+        self:setPlayerStatus(player_name, FSKeyCode, unit_code);
+        core.show_formspec(player_name, FSKeyCode, STCodeEditor(code.data));
     else
-        core.chat_send_player(playername, "No Unit found with ID: '" .. unit_id .. "'");
+        core.chat_send_player(player_name, "No Unit found with Code: '" .. unit_code .. "'");
     end
 end
