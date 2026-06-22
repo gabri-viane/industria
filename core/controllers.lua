@@ -42,12 +42,13 @@ function Industria.controllers:deserialize()
 
     --Carica le unità in runtime
     for unit_code, unit in pairs(self.units) do
-        local res = Industria.runtime:registerToRuntime(unit);
-        --[[if res.completed then
-            core.chat_send_all("Loaded unit: \'"..unit_code.."\'");
-        else
-            core.chat_send_all("Failed to load unit: \'"..unit_code.."\'");
-        end]] --
+        local th = coroutine.create(function()
+            local res = Industria.runtime:registerToRuntime(unit);
+            if not res.completed then
+                core.log("warning", "Registration to runtime of: '" .. unit_code .. "' was not completed:\n" .. res.msg);
+            end
+        end)
+        coroutine.resume(th);
     end
 
     return fnresult(true, nil, self);
@@ -107,6 +108,12 @@ function Industria.controllers:getUnit(unit_code)
 
     return fnresult(true, nil, self.units[unit_code]);
 end
+
+--#region
+-- TODO: codice per rimuovere "DELETE" l'unità, ovvero rimuovere file e unità senza che il blocco sia rimosso:
+-- è necessario anche togliere le tag meta dal nodo
+--#endregion
+
 
 ---Removes completly a unit: removse also files and saves.
 ---@param unit_id string unit id to be removed

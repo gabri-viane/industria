@@ -5,11 +5,15 @@
 ---@alias unit_id string Codice dell'unità
 ---@alias owner string Nome del giocatore/proprietario
 ---@alias unit_code string è formarto da unitid.."_"..owner
+---@alias io_unit_code string è formato da "io_"..unitid.."_"..owner
 ---@alias reference_program string Nome del file in cui è contenuto il codice ST
 
 ---@alias VarEnv {value: any, dtype: any} Variabile d'ambiente: valore e tipo (usata in interprete)
 ---@alias Environment table<string,VarEnv> Tabella di variabili-valori
 
 ---@alias Unit {unit_id : unit_id, owner : owner, reference_program : reference_program, last_env : Environment, enabled : boolean, protected : boolean} Unità/Controllore
+---@alias IOUnit {iounit_code : io_unit_code, owner : owner, reference_unit : unit_code, io_ports: string|nil[]} Unità/Controllore
+
+
 
 ---@alias RTInfo {enabled:boolean,interp: Interpreter|nil,errors:string[]}

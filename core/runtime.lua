@@ -1,13 +1,16 @@
 ---Function that can be called from within ST programs with the PRINT('text') function
 ---@param text string The text to print to the chat
-Industria.runtime.print = function(text)
-    core.chat_send_all(text);
+---@param unit Unit The unit that this code is belonging to
+Industria.runtime.print = function(text, unit)
+    if unit ~= nil then --I messaggi di print li invio
+        core.chat_send_player(unit.owner, table.concat({ "[", unit.unit_id, "]: ", text }, ""));
+    end
 end
 
 local fnresult = Industria.commons.fnresult;
 
 ---Register an error (usually interpreter ones) to the Unit
----@param unit_code string The unit code to which add the error
+---@param unit_code string|nil The unit code to which add the error
 ---@param message string the error message
 ---@return Result<nil>
 function Industria.runtime:registerError(unit_code, message)
@@ -167,7 +170,7 @@ function Industria.runtime:createInterpreter(unit, load_init)
         return fnresult(false, "Code not loaded", nil);
     end
 
-    local unit_code = unit.unit_id .. "_" .. unit.owner;
+    local unit_code = Industria.units.toUnitCode(unit.unit_id, unit.owner) or "";
     --Load the ST code from the file using the reference_program parameter
     local programcode = Industria.ST.loadCode(Industria.datapath .. "/" .. unit.reference_program);
     if not programcode.completed then
@@ -175,7 +178,7 @@ function Industria.runtime:createInterpreter(unit, load_init)
         return fnresult(false, "Code not loaded:\n" .. programcode.msg, nil); --Code not loaded
     end
     --Genera l'interprete
-    local res_interpreter = Industria.ST.interpCode(programcode.data, unit_code);
+    local res_interpreter = Industria.ST.interpCode(programcode.data, unit_code, unit);
     if not res_interpreter.completed then
         self:registerError(unit_code, res_interpreter.msg);
         return fnresult(false, "Interpreter not generated: " .. res_interpreter.msg, nil); --L'interprete non è stato generato
@@ -226,13 +229,13 @@ function Industria.runtime:registerToRuntime(unit)
         --Imposto gli errori
         self.units[unit_code].errors = {};
         --Imposto l'interprete
-        self.units[unit_code].interp = {};
+        self.units[unit_code].interp = nil;
     end
 
     if unit.enabled then
         local res = self:createInterpreter(unit, true);
         if not res.completed then
-            core.debug(res.msg);
+            core.log("error", res.msg);
         end
     end
     return fnresult(true, nil, nil);
@@ -254,20 +257,23 @@ end
 core.register_globalstep(function(dtime)
     for key, value in pairs(Industria.runtime.units) do
         if value ~= nil and value.enabled and value.interp ~= nil then
-            if value.interp.cycle == nil then
-                local unit = Industria.controllers.units[key]; --Prendo l'unità
-                if unit ~= nil then                            --Se esiste la disabilito
-                    Industria.runtime:disableUnit(unit);
-                end
+            --Imposto l'unità corrente su cui sto lavorando (in questo modo le
+            --funzioni del codice ST si riferiranno a questà unità: come la chiamata
+            --alla funzione PRINT)
+
+            if value.interp.cycle == nil and       --Prendo l'unità
+                value.interp:getUnit() ~= nil then --Se esiste la disabilito
+                Industria.runtime:disableUnit(value.interp:getUnit());
             else
-                local ok, err3, cur_env, stats = value.interp:cycle();
-                --TODO: cur_env deve essere passato a tutte le unità in ascolto per le uscite e input
-                if not ok then                                     --Errore nell'esecuzione del ciclo dell'unità
-                    local unit = Industria.controllers.units[key]; --Prendo l'unità
-                    if unit ~= nil then                            --Se esiste la disabilito
-                        Industria.runtime:disableUnit(unit);
+                local th = coroutine.create(function()
+                    local ok, err3, cur_env, stats = value.interp:cycle();
+                    --TODO: cur_env deve essere passato a tutte le unità in ascolto per le uscite e input
+                    if not ok and                          --Errore nell'esecuzione del ciclo dell'unità
+                        value.interp:getUnit() ~= nil then --Se esiste la disabilito
+                        Industria.runtime:disableUnit(value.interp:getUnit());
                     end
-                end
+                end)
+                coroutine.resume(th);
             end
         end
     end

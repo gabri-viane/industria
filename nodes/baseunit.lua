@@ -55,7 +55,7 @@ local function after_dig_callback(pos, oldnode, oldmetadata, digger)
 end
 
 core.register_node("industria:baseunit", {
-    description = "Base PLC",
+    description = "Base Unit",
     drawtype = "mesh",
     mesh = "BaseModelController.glb",
     tiles = { "BaseControllerTexture.png" },

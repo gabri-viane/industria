@@ -34,3 +34,4 @@ baseunit = {
 
 dofile(Industria.path .. "/nodes/commons.lua");
 dofile(Industria.path .. "/nodes/baseunit.lua");
+dofile(Industria.path .. "/nodes/basebutton.lua");

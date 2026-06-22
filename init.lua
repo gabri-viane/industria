@@ -24,11 +24,27 @@ core.register_chatcommand("tmp", {
     end
 });
 
----On exit save controllers data
-core.register_on_shutdown(function()
+---Saves all the mods data
+local saveFun = function()
     Industria.runtime:saveCurrentEnv();
     Industria.controllers:serialize();
+end
+
+---On exit save controllers data
+core.register_on_shutdown(function()
+    saveFun();
 end)
+
+local programm_save;
+programm_save = function()
+    core.after(120, function()
+        saveFun();
+        programm_save();
+    end);
+end
+
+programm_save();
+
 
 
 
