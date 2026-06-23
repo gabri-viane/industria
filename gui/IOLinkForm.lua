@@ -1,14 +1,13 @@
------------------------------------------- Definition of the Main Form for Units ---------------------------------------
-
-local FSKeyCode = "Industria:Unit:UnitMainForm";
+------------------------------------------ Definition of the IO Link Form ---------------------------------------
+--[[
+local FSKeyCode = "Industria:Unit:IOLinkForm";
 local coreCloseFormSpec = core.close_formspec;
-local sendPlayerMsg = core.chat_send_player;
 
 --- Main form for a Unit, displays infos and settings.
 ---@param unit Unit
 ---@param playername string
 ---@return string #The formspec
-local UnitMainForm = function(unit, playername)
+local IOLinkForm = function(unit, playername)
     local strstatus = "Enabled";
     local straction = "Disable";
     local color = "green";
@@ -59,15 +58,15 @@ end
 --- Callback function to handle fields of the Main Unit Form.
 ---@param player_name string Player name
 ---@param fields any The fields of the formspec
-function Industria.formspecs.callbacks:UnitMainFormCallback(player_name, fields)
+function Industria.formspecs.callbacks:IOLinkFormCallback(player_name, fields)
     local unitcode = Industria.formspecs:getPlayerStatus(player_name).data;
 
     local closeFS = function(message)
         if message ~= nil then
-            sendPlayerMsg(player_name, message);
+            core.chat_send_player(player_name, message);
         end
         Industria.formspecs:setPlayerStatus(player_name, nil, nil);
-        coreCloseFormSpec(player_name, FSKeyCode);
+        core.close_formspec(player_name, FSKeyCode);
     end
 
     if unitcode == nil or not (type(unitcode) == "string") then
@@ -91,7 +90,7 @@ function Industria.formspecs.callbacks:UnitMainFormCallback(player_name, fields)
             res = Industria.runtime:enableUnit(unit.data);
         end
         if not res.completed then
-            sendPlayerMsg(player_name, core.colorize("orange", res.msg));
+            core.chat_send_player(player_name, core.colorize("orange", res.msg));
         end
         --Aggiorna il formspec
         Industria.formspecs:showUnitMainForm(player_name, unitcode);
@@ -119,7 +118,7 @@ function Industria.formspecs.callbacks:UnitMainFormCallback(player_name, fields)
 
     if fields.editCodeUnit then
         --Chiudo il formspec e apro quello di editing
-        coreCloseFormSpec(player_name, FSKeyCode);
+        core.close_formspec(player_name, FSKeyCode);
         Industria.formspecs:showEditor(player_name, unitcode);
         Industria.formspecs:setPlayerStatusFallback(player_name, function()
             --Una volta chiuso l'editor torna alla pagina principale
@@ -134,12 +133,12 @@ end
 --- only to the owner.
 ---@param playername string Name of the player to show to unit to
 ---@param unit_code unit_code The id of the plc to be handled
-function Industria.formspecs:showUnitMainForm(playername, unit_code)
+function Industria.formspecs:showIOLinkForm(playername, unit_code)
     local res = Industria.controllers:getUnit(unit_code);
     if res.completed then
         --Devo controllare se l'unità è protetta
         if res.data.protected and playername ~= res.data.owner then
-            sendPlayerMsg(playername, core.color("red", "You have no access to the unit."));
+            core.chat_send_player(playername, core.color("red", "You have no access to the unit."));
             return;
         end
 
@@ -148,8 +147,9 @@ function Industria.formspecs:showUnitMainForm(playername, unit_code)
                 Industria.formspecs.callbacks:UnitMainFormCallback(pname, fields);
             end);
         self:setPlayerStatus(playername, FSKeyCode, unit_code);
-        coreCloseFormSpec(playername, FSKeyCode, UnitMainForm(res.data, playername));
+        core.show_formspec(playername, FSKeyCode, UnitMainForm(res.data, playername));
     else
-        sendPlayerMsg(playername, "No Unit found with Code: '" .. tostring(unit_code) .. "'");
+        core.chat_send_player(playername, "No Unit found with Code: '" .. tostring(unit_code) .. "'");
     end
 end
+]]--

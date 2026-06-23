@@ -11,6 +11,7 @@ dofile(Industria.path .. "/core/controllers.lua");
 dofile(Industria.path .. "/core/runtime.lua");
 dofile(Industria.path .. "/gui/formspecs.lua");
 dofile(Industria.path .. "/nodes/init.lua");
+dofile(Industria.path .. "/tools/init.lua");
 
 Industria.datapath = worldmotd_path .. "/industriadt";
 if not (core.path_exists(Industria.datapath)) then

@@ -3,12 +3,23 @@ local fnresult = Industria.commons.fnresult;
 ---Given the UnitID and Owner name (the player name that is the owner of the unit)
 ---@param unit_id unit_id The UnitID, must be unique
 ---@param player_name owner The player name
----@return string|nil #returns nil if one f the two params is null, otherwise the unit_code
+---@return string|nil #returns nil if one of the two params is null, otherwise the unit_code
 function Industria.units.toUnitCode(unit_id, player_name)
     if unit_id == nil or player_name == nil then
         return nil;
     else
         return unit_id .. "_" .. player_name;
+    end
+end
+
+---Given the Unit gets the UnitID and Owner name (the player name that is the owner of the unit)
+---@param unit Unit The Unit to get the unit_code from
+---@return string|nil #returns nil if one of the two params is null, otherwise the unit_code
+function Industria.units.getUnitCode(unit)
+    if unit == nil then
+        return nil;
+    else
+        return Industria.units.toUnitCode(unit.unit_id, unit.owner);
     end
 end
 

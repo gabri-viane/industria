@@ -1,6 +1,8 @@
 ------------------------------------------ Definition of the Unit ID Input ---------------------------------------
 
 local FSKeyCode = "Industria:Unit:SetIDInput";
+local coreCloseFormSpec = core.close_formspec;
+local sendPlayerMsg = core.chat_send_player;
 
 --- Generate the formspec for inputting the Unit  ID.
 ---@return string #The formspec
@@ -18,16 +20,16 @@ function Industria.formspecs.callbacks:PLCIDInputCallback(player_name, fields)
     local node_pos = Industria.formspecs:getPlayerStatus(player_name).data;
 
     if node_pos == nil then
-        core.chat_send_player(player_name, "No Node Position");
+        sendPlayerMsg(player_name, "No Node Position");
         Industria.formspecs:setPlayerStatus(player_name, nil, nil);
-        core.close_formspec(player_name, FSKeyCode);
+        coreCloseFormSpec(player_name, FSKeyCode);
         return;
     end
     --Richiesto di uscire dal form senza salvare oppure nodo non esiste
     local node = core.get_node_or_nil(node_pos);
     if node == nil or fields.exit then
         Industria.formspecs:setPlayerStatus(player_name, nil, nil);
-        core.close_formspec(player_name, FSKeyCode);
+        coreCloseFormSpec(player_name, FSKeyCode);
         return;
     else
 
@@ -42,7 +44,7 @@ function Industria.formspecs.callbacks:PLCIDInputCallback(player_name, fields)
         end
         --Controllo che il testo inserito non sia vuoto
         if Industria.commons.isBlank(fields.unitID) then
-            core.chat_send_player(player_name, "Empty ID not permitted.");
+            sendPlayerMsg(player_name, "Empty ID not permitted.");
             return;
         end
 
@@ -55,20 +57,20 @@ function Industria.formspecs.callbacks:PLCIDInputCallback(player_name, fields)
             --Salvo il codice (il file con template di un programma)
             if Industria.files.saveUnitCode(res.data, Industria.files.STtemplate) then
                 --Chiudo il formspec
-                core.close_formspec(player_name, FSKeyCode);
+                coreCloseFormSpec(player_name, FSKeyCode);
                 Industria.formspecs:setPlayerStatus(player_name, nil, nil);
                 --Registro a runtime l'unità
                 Industria.runtime:registerToRuntime(res.data);
             else
-                core.chat_send_player(player_name, "ST File not generated");
+                sendPlayerMsg(player_name, "ST File not generated");
             end
             meta:set_string("unit_id", trimmedID);
             meta:set_string("unit_owner", player_name);
         else
-            core.chat_send_player(player_name, "Unit already exists or is invalid.");
+            sendPlayerMsg(player_name, "Unit already exists or is invalid.");
         end
         --Se non ho creato l'unità chiudo comunque
-        core.close_formspec(player_name, FSKeyCode);
+        coreCloseFormSpec(player_name, FSKeyCode);
         Industria.formspecs:setPlayerStatus(player_name, nil, nil);
     end
 end
@@ -95,5 +97,5 @@ function Industria.formspecs:showPLCInputID(player_name, node_position)
             Industria.formspecs.callbacks:PLCIDInputCallback(pname, fields);
         end);
     self:setPlayerStatus(player_name, FSKeyCode, node_position);
-    core.show_formspec(player_name, FSKeyCode, PLCIDInput());
+    coreCloseFormSpec(player_name, FSKeyCode, PLCIDInput());
 end

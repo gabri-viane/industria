@@ -6,22 +6,22 @@ Industria.units = {
         ---@type UnitSize
         small = {
             max_vars = 10,
-            max_io = 4,
+            max_io = 8, --4 inputs, 4 outputs
         },
         ---@type UnitSize
         medium = {
             max_vars = 20,
-            max_io = 8,
+            max_io = 16, --8 inputs, 8 outputs
         },
         ---@type UnitSize
         large = {
             max_vars = 40,
-            max_io = 16,
+            max_io = 32, --16 inputs, 16 outputs
         },
         ---@type UnitSize
         unlimited = {
             max_vars = 400,
-            max_io = 72,
+            max_io = 64,--32 inputs, 32 outputs
         },
     },
 

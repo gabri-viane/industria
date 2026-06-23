@@ -14,10 +14,18 @@ Industria.controllers = {
     ---@type table<unit_code,Unit>
     units = {}
 };
----Contiene le unità di IO con il codice associato, nel formato:
----{codice1={...},codice2={...}}
----@type table<io_unit_code,IOUnit>
-Industria.iounits = {}
+
+---Contains all the contents and functions related to the IO units registered in the world:
+---this doesn't assure that the IOUnit is bounded to a unit or an enabled unit.
+Industria.iounits = {
+    ---Contiene gli id delle unità di un giocatore nel formato:
+    ---{nome_owner={codice1, codice2, codice3}}
+    ids = {},
+    ---Contiene le unità di IO con il codice associato, nel formato:
+    ---{codice1={...},codice2={...}}
+    ---@type table<io_unit_code,IOUnit>
+    registered = {}
+}
 
 ---"Industria.runtime" contains all the interpreters of all the units defined
 ---in "Industria.controllers" that are enabled and it's used to execute the code.
@@ -28,7 +36,7 @@ Industria.iounits = {}
 ---new units are created or removed.
 Industria.runtime = {
     ---Unità corrente: il ciclo di esecuzione esegue un'unità alla volta: imposta questa
-    ---variabile all'unità che è in esecuzione 
+    ---variabile all'unità che è in esecuzione
     current_unit = nil,
     ---Contiene tutte le unità caricate/create: se un unità non è
     ---presente in questa tabella allora non può essere avviata a runtime

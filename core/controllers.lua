@@ -85,7 +85,8 @@ function Industria.controllers:addUnit(unit_id, owner)
         reference_program = unit_code .. ".st", -- refrenced code file
         last_env = {},                          -- last env used
         enabled = false,
-        protected = false                       --solo l'owner del PLC può aprirlo
+        protected = false,                      -- solo l'owner del PLC può aprirlo
+        io_units = {}                           -- array di id delle unità di IO
     };
     --Aggiungi l'unità
     self.units[unit_code] = unit;
@@ -120,12 +121,12 @@ end
 ---@param owner string owner of the unit
 ---@return Result<nil>
 function Industria.controllers:removeController(unit_id, owner)
-    --Se sono nulli allora non provare nemmeno a cercarla
-    if not unit_id or not owner then
+    --Costruisce la stringa di come è salvata l'unità
+    local unit_code = Industria.units.toUnitCode(unit_id, owner);
+    --Se è nullo allora non provare nemmeno a cercarla
+    if not unit_code then
         return fnresult(false, "Owner or UnitID is null");
     end
-    --Costruisce la stringa di come è salvata l'unità
-    local unit_code = unit_id .. "_" .. owner;
     --Se non esiste allora esci
     if self.units[unit_code] == nil then
         return fnresult(false, "Unit doesn't exists");
@@ -133,20 +134,68 @@ function Industria.controllers:removeController(unit_id, owner)
 
     local unit = self.units[unit_code];
 
+    --Rimuovi dagli id delle unità del giocatore quella corrente
+    local idx = table.indexof(self.ids[owner], unit_code);
+    if idx == -1 then
+        return fnresult(false, "Owner doesn't have permissions on this unit");
+    end
+
+    --Elimino tutte le unità di IO che sono state collegate a questo PLC
+    for _, iounit_code in ipairs(unit.io_units) do
+        local idx_ = table.indexof(unit.io_units, iounit_code);
+        if idx_ == -1 then
+            return fnresult(false, "Unit dosen't contain the IOUnit specified");
+        end
+        --Devo eliminare anche l'unità IO allora chiamo la funzione che lo gestisce
+        Industria.iounits:removeIOUnit(iounit_code, unit.owner);
+    end
+
+    table.remove(self.ids[owner], idx);
     --Elimina il file del codice
     Industria.files.deleteUnitCode(unit);
     --Elimina il file dell'environment
     Industria.files.deleteUnitEnvironment(unit);
-
-    --Rimuovi dagli id delle unità del giocatore quella corrente
-    local indx = Industria.commons.indexof(self.ids[owner], unit_code);
-    table.remove(self.ids[owner], indx);
-
     --Rimuove la unit
     self.units[unit_code] = nil;
-
     --Rimuove l'interprete/unità dal RT
     Industria.runtime:removeUnit(unit);
 
     return fnresult(true, "Unit removed");
+end
+
+---Removes a previously associated IOUnit to an Unit. This function should be called when an IOUnit is removed or
+---rebound to a different Unit.
+---@param unit_code unit_code The Unit code of the Unit from which the IOUnit has to be removed
+---@param io_unit_code io_unit_code The IOUnit code to remove from the Unit
+---@param deleteUnit boolean This parameters is used to call the function Industria.iounits.removeIOUnit to prevent cicrular calls.
+---@return Result<nil|Unit>
+function Industria.controllers:removeIOUnitFromController(unit_code, io_unit_code, deleteUnit)
+    --Se il codice è nullo allora faccio finta di averla rimossa
+    if io_unit_code == nil then
+        return fnresult(true, "No IOUnit was removed");
+    end
+
+    local res_unit = self:getUnit(unit_code);
+    if not res_unit.completed then
+        return res_unit;
+    end
+    --Unità da cui rimuovere il codice
+    local unit = res_unit.data;
+    if unit == nil or unit.io_units == nil then
+        return fnresult(false, "Unit dosen't contain the IOUnit specified");
+    end
+
+    local idx = table.indexof(unit.io_units, io_unit_code);
+    if idx == -1 then
+        return fnresult(false, "Unit dosen't contain the IOUnit specified");
+    end
+
+    --Se devo eliminare anche l'unità IO allora chiamo la funzione che lo gestisce
+    if deleteUnit then
+        Industria.iounits:removeIOUnit(io_unit_code, unit.owner);
+    end
+
+    table.remove(unit.io_units, idx);
+
+    return fnresult(true, nil, unit);
 end

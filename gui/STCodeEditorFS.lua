@@ -1,6 +1,8 @@
 ------------------------------------------ Definition of the code editor ---------------------------------------
 
 local FSKeyCode = "Industria:Unit:Editor";
+local coreCloseFormSpec = core.close_formspec;
+local sendPlayerMsg = core.chat_send_player;
 
 --- Generate the formspec for code editor.
 ---@param text string #The content to display in the editor
@@ -21,7 +23,7 @@ function Industria.formspecs.callbacks:STEditorCallback(player_name, fields)
 
     local closeFS = function()
         Industria.formspecs:setPlayerStatus(player_name, nil, nil);
-        core.close_formspec(player_name, FSKeyCode);
+        coreCloseFormSpec(player_name, FSKeyCode);
         if Industria.formspecs:getPlayerStatus(player_name).fallbackto ~= nil then
             Industria.formspecs:getPlayerStatus(player_name).fallbackto(); --Esegui il callback se presente
             Industria.formspecs:setPlayerStatusFallback(player_name, nil); --Consuma il callback
@@ -56,7 +58,7 @@ function Industria.formspecs.callbacks:STEditorCallback(player_name, fields)
             --Chiudo il formspec
             closeFS();
         else
-            core.chat_send_player(player_name, "Not saved");
+            sendPlayerMsg(player_name, "Not saved");
         end
         return;
     end
@@ -74,7 +76,7 @@ function Industria.formspecs.callbacks:STEditorCallback(player_name, fields)
             --Chiudo il formspec
             closeFS();
         else
-            core.chat_send_player(player_name, "Not saved");
+            sendPlayerMsg(player_name, "Not saved");
         end
         return;
     end
@@ -82,7 +84,7 @@ function Industria.formspecs.callbacks:STEditorCallback(player_name, fields)
 
     if fields.exitForm then
         --Chiudo il formspec
-        core.close_formspec(player_name, FSKeyCode);
+        coreCloseFormSpec(player_name, FSKeyCode);
         Industria.formspecs:setPlayerStatus(player_name, nil, nil);
         return;
     end
@@ -118,8 +120,8 @@ function Industria.formspecs:showEditor(player_name, unit_code)
                 Industria.formspecs.callbacks:STEditorCallback(pname, fields);
             end);
         self:setPlayerStatus(player_name, FSKeyCode, unit_code);
-        core.show_formspec(player_name, FSKeyCode, STCodeEditor(code.data));
+        coreCloseFormSpec(player_name, FSKeyCode, STCodeEditor(code.data));
     else
-        core.chat_send_player(player_name, "No Unit found with Code: '" .. unit_code .. "'");
+        sendPlayerMsg(player_name, "No Unit found with Code: '" .. unit_code .. "'");
     end
 end

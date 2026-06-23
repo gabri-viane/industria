@@ -1,3 +1,8 @@
+math.randomseed(os.clock());
+
+---@type function<table,any>
+table.indexof = table.indexof;
+
 ---Contains common functions or data that needs/should be accessed from project-wide functions
 Industria.commons = {
     ---Create the result for a function to be returned to the caller
@@ -37,11 +42,14 @@ Industria.commons = {
         local res, count =  str:gsub("%s+$", "");
         return res;
     end,
-    indexof = function(tbl, value)
-        local index = {}
-        for k, v in pairs(tbl) do
-            index[v] = k
+    ---Generates a random string
+    ---@param size number Size of the string to be generated
+    ---@return string #The random string generated
+    rndstr = function (size)
+        local rnd_str = {};
+        for i = 1, size, 1 do
+            rnd_str[i] = string.char(math.random(32, 126))
         end
-        return index[value]
+        return table.concat(rnd_str);
     end
 }

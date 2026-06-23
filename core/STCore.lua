@@ -629,7 +629,6 @@ local function new_interpreter(ast, unit)
             Industria.runtime.print(table.concat(parts, "\t"), unit);
             return nil
         end,
-
         -- ── Matematica (IEC 61131-3 §2.5.1) ─────────────────
         ABS           = function(a) return math.abs(a[1]) end,         -- valore assoluto
         SQRT          = function(a) return math.sqrt(a[1]) end,        -- radice quadrata
@@ -1080,7 +1079,7 @@ Industria.ST.interpCode = function(code_source, unit_code, unit)
     -- le variabili vengono allocate e impostate ai valori iniziali
     -- dichiarati nel blocco VAR. Questa fase non esegue il programma.
 
-    local interp = new_interpreter(ast,unit);
+    local interp = new_interpreter(ast, unit);
 
     --[[
         local env_res = interp:init(ast) -- alloca env; NON esegue il corpo del PROGRAM
