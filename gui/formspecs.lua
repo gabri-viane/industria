@@ -90,3 +90,4 @@ end)
 dofile(Industria.path.."/gui/STCodeEditorFS.lua");
 dofile(Industria.path.."/gui/UnitIDInputFS.lua");
 dofile(Industria.path.."/gui/UnitMainFormFS.lua");
+dofile(Industria.path.."/gui/IOLinkForm.lua");

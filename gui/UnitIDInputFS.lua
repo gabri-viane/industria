@@ -2,6 +2,7 @@
 
 local FSKeyCode = "Industria:Unit:SetIDInput";
 local coreCloseFormSpec = core.close_formspec;
+local coreShowFormSpec = core.show_formspec;
 local sendPlayerMsg = core.chat_send_player;
 
 --- Generate the formspec for inputting the Unit  ID.
@@ -97,5 +98,5 @@ function Industria.formspecs:showPLCInputID(player_name, node_position)
             Industria.formspecs.callbacks:PLCIDInputCallback(pname, fields);
         end);
     self:setPlayerStatus(player_name, FSKeyCode, node_position);
-    coreCloseFormSpec(player_name, FSKeyCode, PLCIDInput());
+    coreShowFormSpec(player_name, FSKeyCode, PLCIDInput());
 end

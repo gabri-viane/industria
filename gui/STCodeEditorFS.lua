@@ -2,6 +2,7 @@
 
 local FSKeyCode = "Industria:Unit:Editor";
 local coreCloseFormSpec = core.close_formspec;
+local coreShowFormSpec = core.show_formspec;
 local sendPlayerMsg = core.chat_send_player;
 
 --- Generate the formspec for code editor.
@@ -120,7 +121,7 @@ function Industria.formspecs:showEditor(player_name, unit_code)
                 Industria.formspecs.callbacks:STEditorCallback(pname, fields);
             end);
         self:setPlayerStatus(player_name, FSKeyCode, unit_code);
-        coreCloseFormSpec(player_name, FSKeyCode, STCodeEditor(code.data));
+        coreShowFormSpec(player_name, FSKeyCode, STCodeEditor(code.data));
     else
         sendPlayerMsg(player_name, "No Unit found with Code: '" .. unit_code .. "'");
     end

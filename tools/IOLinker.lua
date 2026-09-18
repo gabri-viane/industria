@@ -1,3 +1,4 @@
+local sendPlayerMsg = core.chat_send_player;
 core.register_tool("industria:iolinker",
     {
         short_description = "IO Linker",
@@ -26,23 +27,38 @@ core.register_tool("industria:iolinker",
             if is_controller > 0 or is_iounit > 0 then
                 if is_controller > 0 then
                     itemstack:get_meta():set_string("industria:io:link:first", core.serialize(pos_under));
+                    sendPlayerMsg(placer:get_player_name(), "Unit linked")
                 end
                 if is_iounit > 0 then
                     itemstack:get_meta():set_string("industria:io:link:second", core.serialize(pos_under));
+                    sendPlayerMsg(placer:get_player_name(), "IOUnit linked")
                 end
 
                 local first = itemstack:get_meta():get("industria:io:link:first");
                 local second = itemstack:get_meta():get("industria:io:link:second");
 
                 if first ~= nil and first ~= "" and second ~= nil and second ~= "" then
-                    core.chat_send_player(placer:get_player_name(), "Linked");
-                    itemstack:get_meta():set_string("industria:io:link:first", "");
-                    itemstack:get_meta():set_string("industria:io:link:second", "");
+                    local unit = core.deserialize(first)
+                    local iounit = core.deserialize(second)
+                    Industria.formspecs:showIOLinkForm(placer:get_player_name(), unit, iounit)
+                    --core.chat_send_player(placer:get_player_name(), "Linked");
+                    --itemstack:get_meta():set_string("industria:io:link:first", "");
+                    --itemstack:get_meta():set_string("industria:io:link:second", "");
                 end
             else
+                sendPlayerMsg(placer:get_player_name(), "Linker cleared")
                 itemstack:get_meta():set_string("industria:io:link:first", "");
                 itemstack:get_meta():set_string("industria:io:link:second", "");
             end
             return itemstack -- Don't consume the item
         end
     })
+
+
+function Industria.iounits:link(iounit_node, unit_node)
+
+end
+
+function Industria.iounits:unlink(iounit_node, unit_node)
+
+end

@@ -27,7 +27,7 @@ local function on_rightclick_callback(pos, node, clicker, itemstack, pointed_thi
                 return;
             end
             core.swap_node(pos,
-                { name = "industria:basebutton", param1 = current_node.param1, param2 = current_node.param2 });
+                { name = node_def.name, param1 = current_node.param1, param2 = current_node.param2 });
         end)
     end
     return itemstack;

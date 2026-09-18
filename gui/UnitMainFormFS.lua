@@ -2,6 +2,7 @@
 
 local FSKeyCode = "Industria:Unit:UnitMainForm";
 local coreCloseFormSpec = core.close_formspec;
+local coreShowFormSpec = core.show_formspec;
 local sendPlayerMsg = core.chat_send_player;
 
 --- Main form for a Unit, displays infos and settings.
@@ -148,7 +149,7 @@ function Industria.formspecs:showUnitMainForm(playername, unit_code)
                 Industria.formspecs.callbacks:UnitMainFormCallback(pname, fields);
             end);
         self:setPlayerStatus(playername, FSKeyCode, unit_code);
-        coreCloseFormSpec(playername, FSKeyCode, UnitMainForm(res.data, playername));
+        coreShowFormSpec(playername, FSKeyCode, UnitMainForm(res.data, playername));
     else
         sendPlayerMsg(playername, "No Unit found with Code: '" .. tostring(unit_code) .. "'");
     end
