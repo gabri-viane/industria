@@ -70,3 +70,13 @@ function Industria.units.isValidUnit(pos, node)
         return fnresult(true, "The node is valid to be registered as unit", nil);
     end
 end
+
+---Given the position of the Node that represents the IOUnit returns the IOUnit Code
+---@param pos any The Unit Node position
+---@return string|nil #returns nil if the parameter is nil, otherwise the iounit_code
+function Industria.iounits.getIOUnitCode(pos)
+    if not pos then
+        return nil
+    end 
+    return "x"..pos.x.."y"..pos.y.."z"..pos.z
+end

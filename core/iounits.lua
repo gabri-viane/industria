@@ -5,7 +5,8 @@ local fnresult = Industria.commons.fnresult;
 function Industria.iounits:serialize()
     local data = {
         ids = self.ids,
-        registered = self.registered
+        registered = self.registered,
+        ioruntime = { inputs = Industria.runtime.iounits.inputs, outputs = Industria.runtime.iounits.outputs }
     };
     local text = core.serialize(data);
     -- Scrivi il file con i dati dei controllori
@@ -39,34 +40,47 @@ function Industria.iounits:deserialize()
     end
     self.ids = data.ids;
     self.registered = data.registered;
+    if data.ioruntime then
+        Industria.runtime.iounits.inputs = data.ioruntime.inputs
+        Industria.runtime.iounits.outputs = data.ioruntime.outputs
+    end
 
     return fnresult(true, nil, self);
 end
 
----Register an IO Unit: registered units can be checkd during runtime to get or set their values/properites
----@param unit Unit The Unit that the IOUnit will be linked to
+---Register an IO Unit: registered units can be checked during runtime to get or set their values/properites
 ---@param owner owner Owner of the IO Unit
 ---@param pos any|nil Position of the node that is going to be registered as an IO Unit
 ---@return Result<IOUnit|nil> #Returns the newly created IOUnit
-function Industria.iounits:addIOUnit(unit, owner, pos)
-    if owner == nil or unit == nil then
-        return fnresult(false, "Unit or Owner are invalid", nil);
+function Industria.iounits:registerIOUnit(owner, pos)
+    if owner == nil then
+        return fnresult(false, "Owner of the IOUnit is invalid", nil);
     end
-    local unit_code = Industria.units.getUnitCode(unit);
-    if not unit_code then
-        return fnresult(false, "Unit is invalid", nil);
+
+    local iounit_code = Industria.iounits.getIOUnitCode(pos)
+    if not iounit_code then
+        return fnresult(false, "IOUnit Code is invalid", nil);
     end
-    --Genera l'ID da usare per l'unità di IO
-    local iounit_code = Industria.commons.rndstr(20);
-    local gen_limiter = 0;
-    --Controlla che l'ID non sia presente
-    while self.registered[iounit_code] and gen_limiter < 3 do
-        iounit_code = Industria.commons.rndstr(20);
-        gen_limiter = gen_limiter + 1;
+
+    local node = core.get_node_or_nil(pos)
+    if not node then
+        return fnresult(false, "Node is invalid", nil);
     end
-    if gen_limiter == 3 then
-        return fnresult(false, "Couldn't generate unique ID for the IOUnit", nil);
+
+    node = core.registered_nodes[node.name];
+    if not node then
+        return fnresult(false, "Node is not an registered", nil);
     end
+
+    if not node.industria_props or not node.groups.industria_iounit then
+        return fnresult(false, "Node is not an Industria IOUnit", nil);
+    end
+
+    local data = node.industria_props
+    if not data.states then
+        return fnresult(false, "Node doesn't contain IOUnit states", nil);
+    end
+
 
     --Se non esiste la tabella di id associata al giocatore allora generale
     if self.ids[owner] == nil then
@@ -75,25 +89,58 @@ function Industria.iounits:addIOUnit(unit, owner, pos)
     --Inserisci nella tabella il nuovo ID: in questo modo è incrementale
     table.insert(self.ids[owner], iounit_code);
 
+    local io_ports = {}
+    for key, value in pairs(data.states) do
+        io_ports[key] = { linked_var = nil, type = value.iotype }
+    end
+
     ---@type IOUnit
     local iounit = {
         iounit_code = iounit_code,
         owner = owner,
-        reference_unit = unit_code,
-        io_ports = {},
-        position = pos
+        reference_unit = nil,
+        io_ports = io_ports,
+        pos_block = pos,
+        linked_states = {}
     };
-
-    --Se non esiste la tabella allora creala
-    if unit.io_units == nil then
-        unit.io_units = {};
-    end
-    --Registra l'unità al PLC
-    table.insert(unit.io_units, iounit_code);
-
     self.registered[iounit_code] = iounit;
 
     return fnresult(true, nil, iounit);
+end
+
+---Removes completly an IO Unit. This will invalid remove the references to the previously binded variables.
+---@param iounit_code io_unit_code IO Unit to be removed
+---@param owner owner owner of the IO Unit
+---@return Result<nil>
+function Industria.iounits:unregisterIOUnit(iounit_code, owner)
+    --Se sono nulli allora non provare nemmeno a cercarla
+    if not iounit_code or not owner then
+        return fnresult(false, "Owner or IOUnitCode is nil");
+    end
+    --Se non esiste allora esci
+    local iounit = self.registered[iounit_code];
+    if iounit == nil then
+        return fnresult(false, "IOUnit doesn't exists");
+    end
+    if self.ids[iounit.owner] == nil then --self.ids[owner] == nil then
+        return fnresult(false, "The owner is not valid");
+    end
+    --Cerca se il giocatore "owner" la possiede
+    local idx = table.indexof(self.ids[iounit.owner], iounit_code); -- self.ids[owner], iounit_code);
+    --if idx == -1 then
+    --    return fnresult(false, "The player doesn't own the IOUnit");
+    --end
+
+    if iounit.reference_unit then
+        --Per prevenire che la funzioni richiami a sua volta questa funzione per eliminare il
+        Industria.runtime.iounits:unlink(iounit);
+    end
+
+    --Elimina l'unità IO
+    self.registered[iounit_code] = nil;
+    table.remove(self.ids[iounit.owner], idx); --self.ids[owner], idx)
+
+    return fnresult(true, "IOUnit removed");
 end
 
 --- Returns an IOUnit, if present, binded to a player, knowing the iounit's Code.
@@ -112,37 +159,115 @@ function Industria.iounits:getIOUnit(iounit_code)
     return fnresult(true, nil, self.registered[iounit_code]);
 end
 
----Removes completly an IO Unit. This will invalid remove the references to the previously binded variables.
----@param iounit_code io_unit_code IO Unit to be removed
----@param owner owner owner of the IO Unit
----@return Result<nil>
-function Industria.iounits:removeIOUnit(iounit_code, owner)
-    --Se sono nulli allora non provare nemmeno a cercarla
-    if not iounit_code or not owner then
-        return fnresult(false, "Owner or IOUnitCode are null");
-    end
-    --Se non esiste allora esci
-    if self.registered[iounit_code] == nil then
-        return fnresult(false, "IOUnit doesn't exists");
-    end
-    if self.ids[owner] == nil then
-        return fnresult(false, "The owner is not valid");
-    end
-    --Cerca se il giocatore "owner" la possiede
-    local idx = table.indexof(self.ids[owner], iounit_code);
-    if idx == -1 then
-        return fnresult(false, "The player doesn't own the IOUnit");
+---Get the states defined for an IOUnit Node.
+---@param node_name string Name of the node: must be an IOUnit
+---@return Result<string[] | nil> #List of states' names
+function Industria.iounits.getAvailableStates(node_name)
+    local node = core.registered_nodes[node_name];
+    if not node then
+        return fnresult(false, "Node doesn't exists", nil);
     end
 
-    local iounit = self.registered[iounit_code];
-
-    if iounit.reference_unit then
-        --Per prevenire che la funzioni richiami a sua volta questa funzione per eliminare il
-       Industria.controllers:removeIOUnitFromController(iounit.reference_unit, iounit_code,false);
+    if not node.industria_props or not node.groups.industria_iounit then
+        return fnresult(false, "Node is not a valid Industria IOUnit", nil);
     end
 
-    --Elimina l'unità IO
-    self.registered[iounit_code] = nil;
+    local data = node.industria_props
+    if not data.states then
+        return fnresult(false, "Industria IOUnit doesn't define any state", nil);
+    end
 
-    return fnresult(true, "IOUnit removed");
+    -- Prendo tutti gli stati possibili per questo blocco
+    local states = {}
+    for key, _ in pairs(data.states) do
+        table.insert(states, key)
+    end
+    return fnresult(true, nil, states);
+end
+
+---Get Node name for the IOUnit
+---@param iounit IOUnit
+---@return string|nil
+function Industria.iounits.getIOUnitNodeName(iounit)
+    if not iounit then
+        return nil;
+    end
+    if not iounit.pos_block then
+        return nil;
+    end
+    local node = core.get_node_or_nil(iounit.pos_block)
+    if node then
+        return node.name
+    end
+    return nil
+end
+
+---Find the state of the IOUnit linked to a certain variable of the environment of the Unit
+---@param iounit IOUnit
+---@param envVarName string
+---@return varname|nil
+function Industria.iounits.getLinkedState(iounit, envVarName)
+    if not envVarName then
+        return nil
+    end
+    --Cerco se la variabile è linkata a qualche stato della IOUnit
+    for key, value in pairs(iounit.io_ports) do
+        if value.linked_var and value.linked_var == envVarName then
+            return key
+        end
+    end
+    return nil
+end
+
+---Get the state of an IOUnit Node.
+---@param node_name string Name of the node: must be an IOUnit
+---@param state_name string Name of the sate to get
+---@return Result<IOState | nil> #List of states' names
+function Industria.iounits.getStateData(node_name, state_name)
+    local node = core.registered_nodes[node_name];
+    if not node then
+        return fnresult(false, "Node doesn't exists", nil);
+    end
+
+    if not node.industria_props or not node.groups.industria_iounit then
+        return fnresult(false, "Node is not a valid Industria IOUnit", nil);
+    end
+
+    local data = node.industria_props
+    if not data.states then
+        return fnresult(false, "Industria IOUnit doesn't define any state", nil);
+    end
+
+    local state = data.states[state_name]
+    if not state or not state.value or not state.iotype or not state.dtype then
+        return fnresult(false, "Industria IOUnit doesn't define the required state", nil);
+    end
+
+    return fnresult(true, nil, state);
+end
+
+---Find all the states of the IOUnit Node
+---@param iounit IOUnit
+---@return IOUnitStats|nil
+function Industria.iounits.getIOUnitStates(iounit)
+    local node = core.get_node_or_nil(iounit.pos_block)
+    if not node then
+        return nil
+    end
+
+    node = core.registered_nodes[node.name];
+    if not node then
+        return nil
+    end
+
+    if not node.industria_props or not node.groups.industria_iounit then
+        return nil
+    end
+
+    local data = node.industria_props
+    if not data.states then
+        return nil
+    end
+
+    return data.states
 end

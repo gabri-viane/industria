@@ -61,7 +61,7 @@ function Industria.formspecs.callbacks:PLCIDInputCallback(player_name, fields)
                 coreCloseFormSpec(player_name, FSKeyCode);
                 Industria.formspecs:setPlayerStatus(player_name, nil, nil);
                 --Registro a runtime l'unità
-                Industria.runtime:registerToRuntime(res.data);
+                Industria.runtime:registerToRuntime(res.data, true);
             else
                 sendPlayerMsg(player_name, "ST File not generated");
             end

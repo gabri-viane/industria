@@ -43,7 +43,7 @@ function Industria.controllers:deserialize()
     --Carica le unità in runtime
     for unit_code, unit in pairs(self.units) do
         local th = coroutine.create(function()
-            local res = Industria.runtime:registerToRuntime(unit);
+            local res = Industria.runtime:registerToRuntime(unit,false);
             if not res.completed then
                 core.log("warning", "Registration to runtime of: '" .. unit_code .. "' was not completed:\n" .. res.msg);
             end
@@ -90,6 +90,8 @@ function Industria.controllers:addUnit(unit_id, owner)
     };
     --Aggiungi l'unità
     self.units[unit_code] = unit;
+    --Registra l'unità per accettare IOUnits
+    Industria.runtime.iounits:registerUnitToIORuntime(unit_code)
 
     return fnresult(true, "Unit created with code " .. unit_code, unit);
 end
@@ -140,15 +142,18 @@ function Industria.controllers:removeController(unit_id, owner)
         return fnresult(false, "Owner doesn't have permissions on this unit");
     end
 
+    
+    --Rimuove l'unità dall'ioruntime e unlinka tutti gli IOUnits
+    Industria.runtime.iounits:unregisterUnitToIORuntime(unit_code)
     --Elimino tutte le unità di IO che sono state collegate a questo PLC
-    for _, iounit_code in ipairs(unit.io_units) do
+    --[[for _, iounit_code in ipairs(unit.io_units) do
         local idx_ = table.indexof(unit.io_units, iounit_code);
         if idx_ == -1 then
             return fnresult(false, "Unit dosen't contain the IOUnit specified");
         end
         --Devo eliminare anche l'unità IO allora chiamo la funzione che lo gestisce
-        Industria.iounits:removeIOUnit(iounit_code, unit.owner);
-    end
+        Industria.iounits:unlink(iounit_code, unit.owner);
+    end]]--
 
     table.remove(self.ids[owner], idx);
     --Elimina il file del codice

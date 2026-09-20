@@ -10,6 +10,13 @@ Industria.formspecs = {
     player_callbacks = {} -- Contiene il callback corrente
 };
 
+function Industria.formspecs.errorFormspec(msg)
+    return table.concat({ "formspec_version[6]",
+        "size[5.5,2.5]",
+        "label[0.75,0.5;Error:]",
+        "label[0.75,1;", msg, "]" })
+end
+
 ---Changes the current player status (relative to formspecs displayed)
 ---@param playername string The playe to set the status to
 ---@param formspecid string|nil ID of the formspec
@@ -87,7 +94,8 @@ core.register_on_player_receive_fields(function(player, formname, fields)
 end)
 
 
-dofile(Industria.path.."/gui/STCodeEditorFS.lua");
-dofile(Industria.path.."/gui/UnitIDInputFS.lua");
-dofile(Industria.path.."/gui/UnitMainFormFS.lua");
-dofile(Industria.path.."/gui/IOLinkForm.lua");
+dofile(Industria.path .. "/gui/STCodeEditorFS.lua");
+dofile(Industria.path .. "/gui/UnitIDInputFS.lua");
+dofile(Industria.path .. "/gui/UnitMainFormFS.lua");
+dofile(Industria.path .. "/gui/IOLinkVariableForm.lua");
+dofile(Industria.path .. "/gui/IOLinkForm.lua");

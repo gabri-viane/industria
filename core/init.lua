@@ -43,4 +43,15 @@ Industria.runtime = {
     ---
     ---@type table<unit_code,RTInfo> Tabella che associa unit_code a {enabled,interpreter}
     units = {},
+    ---Contiene tutta la gestione per il runtime delle IOUnits
+    ---
+    iounits = {}
 };
+
+
+dofile(Industria.path .. "/core/STCore.lua");
+dofile(Industria.path .. "/core/STFiles.lua");
+dofile(Industria.path .. "/core/controllers.lua");
+dofile(Industria.path .. "/core/iounits.lua");
+dofile(Industria.path .. "/core/runtime.lua");
+dofile(Industria.path .. "/core/ioruntime.lua");

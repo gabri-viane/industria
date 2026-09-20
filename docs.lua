@@ -9,13 +9,17 @@
 ---@alias reference_program string Nome del file in cui è contenuto il codice ST
 
 ---@alias varname string Nome della variabile dichiarata nell'ambiente
----@alias IOType "IN"|"OUT"
+---@alias IOname string Nome della proprietà di Input/Output della IOUnit
+---@alias IOType 0|1|2 0:Input 1:Output 2:Input/Output
 
 ---@alias VarEnv {value: any, dtype: any} Variabile d'ambiente: valore e tipo (usata in interprete)
 ---@alias Environment table<varname,VarEnv> Tabella di variabili-valori
----@alias IOPort {linked_var: varname, pos_block: any, type: IOType}
+---@alias IOLinks table<varname,io_unit_code | nil> Tabella di nome variabili-unità io collegata
+---@alias IOPort {linked_var: varname | nil, type: IOType} Tabella che rappresenta la variabile collegata (se nil allora non è collegata) e la direzione del collegamento
+---@alias IOState {value: any, iotype: IOType, dtype: any} Valore dello stato del Nodo, tipo di stato (input, output, i/o), tipo di variabile (BOOL, REAL, INT, ...)
+---@alias IOUnitStats table<IOname, IOState> Tabella nome stato - attributi stato
 
----@alias Unit {unit_id : unit_id, owner : owner, reference_program : reference_program, last_env : Environment, enabled : boolean, protected : boolean, io_units:io_unit_code[]|nil} Unità/Controllore
----@alias IOUnit {iounit_code : io_unit_code, owner : owner, reference_unit : unit_code, io_ports: IOPort[]} Unità/Controllore
+---@alias Unit {unit_id : unit_id, owner : owner, reference_program : reference_program, last_env : Environment, enabled : boolean, protected : boolean, io_units:IOLinks} Unità/Controllore
+---@alias IOUnit {iounit_code : io_unit_code, owner : owner, reference_unit : unit_code | nil, pos_block: any, io_ports: table<IOname,IOPort>, linked_states: table<varname,IOname>} Unità/Controllore
 
 ---@alias RTInfo {enabled:boolean,interp: Interpreter|nil,errors:string[]}

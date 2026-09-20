@@ -184,6 +184,12 @@ function Industria.runtime:createInterpreter(unit, load_init)
         return fnresult(false, "Interpreter not generated: " .. res_interpreter.msg, nil); --L'interprete non è stato generato
     end
 
+    -- Se ho un'interprete precedente devo controllare se ho IOUnits che puntano a variabili precedenti
+    local prev_env = nil
+    if self.units[unit_code].interp then
+        prev_env = self.units[unit_code].interp:getEnv()
+    end
+
     --Imposta l'interprete associandolo alla Control Unit
     local res = self:setUnitInterpreter(unit, res_interpreter.data);
     if not res.completed then
@@ -192,7 +198,8 @@ function Industria.runtime:createInterpreter(unit, load_init)
     end
     res_interpreter.data:init(); --Inizializza l'interprete
 
-    if load_init then            --Se devo caricare le variabili dal salvataggio
+
+    if load_init then --Se devo caricare le variabili dal salvataggio
         local f, err = io.open(Industria.datapath .. "/" .. unit.reference_program .. ".env", "r");
         if err or f == nil then
             self:registerError(unit_code, err or "ST File error");
@@ -204,6 +211,10 @@ function Industria.runtime:createInterpreter(unit, load_init)
         --Imposta l'environment caricato
         res_interpreter.data:setEnv(unit.last_env);
     end
+
+    --Controllo se avevo delle IOUnits che erano precedentemente collegate e le scollego
+    Industria.runtime.iounits:checkEnvs(unit, res_interpreter.data:getEnv(), prev_env)
+
     return fnresult(true, nil, res_interpreter.data);
 end
 
@@ -211,7 +222,7 @@ end
 ---the interpreter and loding the environment
 ---@param unit Unit
 ---@return Result<nil>
-function Industria.runtime:registerToRuntime(unit)
+function Industria.runtime:registerToRuntime(unit, justCreated)
     if unit == nil then
         return fnresult(false, "Unit must be not nil.");
     end
@@ -232,22 +243,26 @@ function Industria.runtime:registerToRuntime(unit)
         self.units[unit_code].interp = nil;
     end
 
-    if unit.enabled then
-        local res = self:createInterpreter(unit, true);
-        if not res.completed then
-            core.log("error", res.msg);
-        end
+    --if unit.enabled then
+    local res = self:createInterpreter(unit, justCreated == nil or not justCreated);
+    if not res.completed then
+        core.log("error", res.msg);
     end
+    --end
     return fnresult(true, nil, nil);
 end
 
 ---Saves all the executing environments to the unit's last_env parameter
 function Industria.runtime:saveCurrentEnv()
     for key, value in pairs(self.units) do
-        if value ~= nil and value.enabled and value.interp ~= {} then
-            local unit = Industria.controllers.units[key]; --Prendo l'unità
-            if unit ~= nil then                            --Se esiste salvo
-                unit.last_env = value.interp:getEnv();
+        if value ~= nil then
+            local unit = Industria.controllers.units[key];   --Prendo l'unità
+            if unit ~= nil then
+                if value.enabled and value.interp ~= {} then --se l'env si sta modificando (enabled) allora aggiorno last_env
+                    --Se esiste salvo
+                    unit.last_env = value.interp:getEnv();
+                end
+                --salvo last_env
                 Industria.files.saveUnitEnvironment(unit);
             end
         end
@@ -260,17 +275,20 @@ core.register_globalstep(function(dtime)
             --Imposto l'unità corrente su cui sto lavorando (in questo modo le
             --funzioni del codice ST si riferiranno a questà unità: come la chiamata
             --alla funzione PRINT)
-
-            if value.interp.cycle == nil and       --Prendo l'unità
-                value.interp:getUnit() ~= nil then --Se esiste la disabilito
-                Industria.runtime:disableUnit(value.interp:getUnit());
+            local unit = value.interp:getUnit();
+            if value.interp.cycle == nil and --Prendo l'unità
+                unit ~= nil then             --Se esiste la disabilito
+                Industria.runtime:disableUnit(unit);
             else
                 local th = coroutine.create(function()
+                    Industria.runtime.iounits:executeCopy(value.interp, unit, 0)
                     local ok, err3, cur_env, stats = value.interp:cycle();
                     --TODO: cur_env deve essere passato a tutte le unità in ascolto per le uscite e input
-                    if not ok and                          --Errore nell'esecuzione del ciclo dell'unità
-                        value.interp:getUnit() ~= nil then --Se esiste la disabilito
-                        Industria.runtime:disableUnit(value.interp:getUnit());
+                    if not ok and        --Errore nell'esecuzione del ciclo dell'unità
+                        unit ~= nil then --Se esiste la disabilito
+                        Industria.runtime:disableUnit(unit);
+                    else
+                        Industria.runtime.iounits:executeCopy(value.interp, unit, 1)
                     end
                 end)
                 coroutine.resume(th);

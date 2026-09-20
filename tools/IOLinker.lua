@@ -53,12 +53,3 @@ core.register_tool("industria:iolinker",
             return itemstack -- Don't consume the item
         end
     })
-
-
-function Industria.iounits:link(iounit_node, unit_node)
-
-end
-
-function Industria.iounits:unlink(iounit_node, unit_node)
-
-end

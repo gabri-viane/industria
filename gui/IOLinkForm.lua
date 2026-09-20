@@ -5,7 +5,7 @@ local coreCloseFormSpec = core.close_formspec;
 local coreShowFormSpec = core.show_formspec;
 local sendPlayerMsg = core.chat_send_player;
 
---- Main form for a IOLinker, displays the link's options.
+--- Main form for a IOLinker, displays the link's confirmation panel.
 ---@param unit_mesh_and_texture table Name of the registered node of the Unit
 ---@param iounit_mesh_and_texture table Name of the registered node of the IOUnit
 ---@return string #The formspec
@@ -36,7 +36,9 @@ end
 ---@param player_name string Player name
 ---@param fields any The fields of the formspec
 function Industria.formspecs.callbacks:IOLinkFormCallback(player_name, fields)
-    local unitcode = Industria.formspecs:getPlayerStatus(player_name).data;
+    local playerdata = Industria.formspecs:getPlayerStatus(player_name).data;
+    local pos_unit = playerdata.unit
+    local pos_iounit = playerdata.iounit
 
     local closeFS = function(message)
         if message ~= nil then
@@ -46,60 +48,51 @@ function Industria.formspecs.callbacks:IOLinkFormCallback(player_name, fields)
         coreCloseFormSpec(player_name, FSKeyCode);
     end
 
-    if unitcode == nil or not (type(unitcode) == "string") then
-        closeFS("No Unit ID to handle");
+    if pos_unit == nil or pos_iounit == nil then
+        closeFS("No Unit or IOUnit to handle");
         return;
     end
 
-    --Devo fare il toggle del valore di enable
-    if fields.enableToggleButton then
-        local unit = Industria.controllers:getUnit(unitcode);
-        --Controllo di avere la unit
-        if not unit.completed then
-            closeFS("No Unit found");
-            return;
-        end
-        local res;
-        --Inverti lo stato corrente
-        if unit.data.enabled then
-            res = Industria.runtime:disableUnit(unit.data);
-        else
-            res = Industria.runtime:enableUnit(unit.data);
-        end
-        if not res.completed then
-            sendPlayerMsg(player_name, core.colorize("orange", res.msg));
-        end
-        --Aggiorna il formspec
-        Industria.formspecs:showUnitMainForm(player_name, unitcode);
+    if fields.removeIOUnit then
         return;
     end
 
-    --Devo fare il toggle del valore di protected solo se è il proprietario
-    if fields.protectToggleButton then
-        local unit = Industria.controllers:getUnit(unitcode);
-        --Controllo di avere la unit
-        if not unit.completed then
-            closeFS("No Unit found");
-            return;
-        end
-        --Se non è il proprietario allora non può modificare il livello di protezione
-        if unit.data.owner ~= player_name then
-            return;
-        end
-        --Inverti lo stato corrente
-        unit.data.protected = not unit.data.protected;
-        --Aggiorna il formspec
-        Industria.formspecs:showUnitMainForm(player_name, unitcode);
+    if fields.removeIOController then
         return;
     end
 
-    if fields.editCodeUnit then
-        --Chiudo il formspec e apro quello di editing
-        coreCloseFormSpec(player_name, FSKeyCode);
-        Industria.formspecs:showEditor(player_name, unitcode);
+    if fields.linkButton then
+        local resunit = Industria.units.isValidUnit(pos_unit, nil);
+        local unit = resunit.data;
+        if not resunit.completed or not unit then
+            closeFS("Selected Unit is invalid");
+            return;
+        end
+        if unit.owner ~= player_name then
+            closeFS("Selected Unit is not owned by the player");
+            return;
+        end
+        local iounit_code = Industria.iounits.getIOUnitCode(pos_iounit);
+        if not iounit_code then
+            closeFS("Couldn't find selected IOUnit");
+            return;
+        end
+        local res = Industria.iounits:getIOUnit(iounit_code);
+        local iounit = res.data;
+        if not res.completed or not iounit then
+            closeFS("Selected IOUnit is invalid");
+            return;
+        end
+        if iounit.owner ~= player_name then
+            closeFS("Selected IOUnit is not owned by the player");
+            return;
+        end
+
+        closeFS();
+        Industria.formspecs:showIOLinkVariableForm(player_name, unit, iounit);
         Industria.formspecs:setPlayerStatusFallback(player_name, function()
-            --Una volta chiuso l'editor torna alla pagina principale
-            Industria.formspecs:showUnitMainForm(player_name, unitcode);
+            --Una volta chiuso la gestione variabili torna alla pagina principale
+            Industria.formspecs:showIOLinkForm(player_name, pos_unit, pos_iounit);
         end);
         return;
     end
