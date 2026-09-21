@@ -5,7 +5,9 @@ Industria.runtime.iounits = {
     ---@type table<unit_code,io_unit_code[]>
     inputs = {},
     ---@type table<unit_code,io_unit_code[]>
-    outputs = {}
+    outputs = {},
+    ---@type table<iounitname, IOUnitStats>
+    states = {}
 }
 
 ---Registra nel runtime di Input e Output "Industria.iounits.ios" il controllore (Unit) affinché gli possano essere
@@ -261,9 +263,6 @@ function Industria.runtime.iounits:executeCopy(interp, unit, direction)
     local state_name = nil
     local env = interp:getEnv()
 
-    
-    --core.chat_send_all(core.serialize(unit.io_units))
-
     for varname, iounit_code in pairs(unit.io_units) do
         res = Industria.iounits:getIOUnit(iounit_code)
         iounit = res.data
@@ -271,10 +270,17 @@ function Industria.runtime.iounits:executeCopy(interp, unit, direction)
             states = Industria.iounits.getIOUnitStates(iounit)
             state_name = iounit.linked_states[varname]
             if states and state_name and states[state_name] then
-                if (direction == 0 and states[state_name].iotype == 0) or
-                    (direction == 1 and states[state_name].iotype == 1) then
+                if (direction == 0 and states[state_name].iotype == 0) then
                     if env[varname].dtype == states[state_name].dtype then
-                        env[varname].value = states[state_name].value
+                        if type(states[state_name].value) == "function" then
+                            env[varname].value = states[state_name].value(iounit)
+                        else
+                            env[varname].value = states[state_name].value
+                        end
+                    end
+                elseif (direction == 1 and states[state_name].iotype == 1) then
+                    if type(states[state_name].value) == "function" then
+                        states[state_name].value(iounit, env[varname].value)
                     end
                 end
             end

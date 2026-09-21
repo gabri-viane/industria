@@ -24,7 +24,7 @@ local IOLinkForm = function(unit_mesh_and_texture, iounit_mesh_and_texture)
         --"button[6,0;1.5,0.5;close;Close]",
         "model[0.5,0.75;1.5,1.5;iounit_model;", iounit_model_name, ";", iounit_texture_name, ";-30,30;false;true;;0]",
         "button[0.5,2.25;1.25,0.5;removeIOUnit;Remove]",
-        "image_button[2,1;1.5,0.75;link_io.png;linkButton;Link;false;true;]",
+        "image_button[2,1;1.5,0.75;industria_button_link_io.png;linkButton;Link;false;true;]",
         "model[3.75,0.75;1.5,1.5;unit_model;", unit_model_name, ";", unit_texture_name, ";-30,30;false;true;;0]",
         "button[3.75,2.25;1.25,0.5;removeIOController;Remove]",
         --"button[5.2,1.2;2,0.7;linkVariables;Link Variables]"

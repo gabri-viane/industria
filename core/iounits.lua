@@ -77,8 +77,8 @@ function Industria.iounits:registerIOUnit(owner, pos)
     end
 
     local data = node.industria_props
-    if not data.states then
-        return fnresult(false, "Node doesn't contain IOUnit states", nil);
+    if not data.iounit_name then
+        return fnresult(false, "Node doesn't contain a name reference to a registered IOUnit", nil);
     end
 
 
@@ -90,12 +90,13 @@ function Industria.iounits:registerIOUnit(owner, pos)
     table.insert(self.ids[owner], iounit_code);
 
     local io_ports = {}
-    for key, value in pairs(data.states) do
+    for key, value in pairs(Industria.runtime.iounits.states[data.iounit_name]) do
         io_ports[key] = { linked_var = nil, type = value.iotype }
     end
 
     ---@type IOUnit
     local iounit = {
+        iounitname = data.iounit_name,
         iounit_code = iounit_code,
         owner = owner,
         reference_unit = nil,
@@ -173,13 +174,13 @@ function Industria.iounits.getAvailableStates(node_name)
     end
 
     local data = node.industria_props
-    if not data.states then
-        return fnresult(false, "Industria IOUnit doesn't define any state", nil);
+    if not data.iounit_name then
+        return fnresult(false, "Node doesn't contain a name reference to a registered IOUnit", nil);
     end
 
     -- Prendo tutti gli stati possibili per questo blocco
     local states = {}
-    for key, _ in pairs(data.states) do
+    for key, _ in pairs(Industria.runtime.iounits.states[data.iounit_name]) do
         table.insert(states, key)
     end
     return fnresult(true, nil, states);
@@ -234,11 +235,11 @@ function Industria.iounits.getStateData(node_name, state_name)
     end
 
     local data = node.industria_props
-    if not data.states then
-        return fnresult(false, "Industria IOUnit doesn't define any state", nil);
+    if not data.iounit_name then
+        return fnresult(false, "Node doesn't contain a name reference to a registered IOUnit", nil);
     end
 
-    local state = data.states[state_name]
+    local state = Industria.runtime.iounits.states[data.iounit_name][state_name]
     if not state or not state.value or not state.iotype or not state.dtype then
         return fnresult(false, "Industria IOUnit doesn't define the required state", nil);
     end
@@ -265,9 +266,9 @@ function Industria.iounits.getIOUnitStates(iounit)
     end
 
     local data = node.industria_props
-    if not data.states then
+    if not data.iounit_name then
         return nil
     end
 
-    return data.states
+    return Industria.runtime.iounits.states[data.iounit_name]
 end

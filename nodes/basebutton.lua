@@ -3,7 +3,7 @@ local function on_rightclick_callback(pos, node, clicker, itemstack, pointed_thi
         return;
     end
     local current_node = core.get_node_or_nil(pos);
-    if current_node == nil then
+    if current_node == nil or current_node.name == "ignore" then
         return;
     end
 
@@ -13,12 +13,7 @@ local function on_rightclick_callback(pos, node, clicker, itemstack, pointed_thi
         return itemstack;
     end
 
-    if ind_props.is_button and not ind_props.is_pressed then
-        local metainf = core.get_meta(pos);
-
-        --TODO: gestire il segnale se è stato linkato
-        local link = metainf:get_string("industria:io:input:linked");
-
+    if not ind_props.pressed then
         core.swap_node(pos,
             { name = node_def.name .. "_pressed", param1 = current_node.param1, param2 = current_node.param2 });
         core.after(1, function()
@@ -33,126 +28,75 @@ local function on_rightclick_callback(pos, node, clicker, itemstack, pointed_thi
     return itemstack;
 end
 
-local function after_dig_callback(pos, oldnode, oldmetadata, digger)
-    local iounit_code = Industria.iounits.getIOUnitCode(pos)
-    if not iounit_code then
-        return;
-    end
-    local res = Industria.iounits:getIOUnit(iounit_code)
-    --Devo controllare se esiste l'IOUnit
-    if not res.completed then
-        --Se non la ho non devo rimuovere nulla
-        return;
-    end
-    local iounit = res.data
-    if not iounit then
-        --Se non lo ho non devo rimuovere nulla
-        return;
-    end
-    local playername = ""
-    if digger:is_player() then
-        playername = digger:get_player_name()
-    end
-    local res2 = Industria.iounits:unregisterIOUnit(iounit_code, playername)
-    if res2.completed then
-        core.chat_send_player(iounit.owner,
-            "The IOUnit at position (" .. pos.x .. "," .. pos.y .. "," .. pos.z .. ") has been removed.");
-    elseif digger:is_player() then
-        core.chat_send_player(playername, res.msg);
-    end
-end
-
-local function after_place_callback(pos, placer, itemstack, pointed_thing)
-    if placer and placer:is_player() then
-        --Registro l'IOUnit
-        Industria.iounits:registerIOUnit(placer:get_player_name(), pos)
-        local node = core.get_node_or_nil(pos)
-        --[[  if node then
-            local res = Industria.iounits.getAvailableStates(node.name)
-            if res.completed then
-                core.chat_send_player(placer:get_player_name(), table.concat(res.data,", "))
-            else
-                core.chat_send_player(placer:get_player_name(), res.msg)
-            end
-        end ]]
-    end
-    return false --Consuma l'oggetto
-end
-
-
 function Industria.register_digital_button(def)
+    local def_texture = "industria_base_button.png"
     if def.material == nil then
         def.material = "unknwon"
     end
 
     if def.texture == nil then
-        def.texture = { default = "BaseButton.png", pressed = "BaseButton.png" };
+        def.texture = { default = def_texture, pressed = def_texture };
     else
         if def.texture.default == nil then
-            def.texture.default = "BaseButton.png";
+            def.texture.default = def_texture;
         end
         if def.texture.pressed == nil then
-            def.texture.pressed = "BaseButton.png";
+            def.texture.pressed = def_texture;
         end
     end
+    local nodename = "industria:digibutton_" .. def.material
+    local nodename_pressed = nodename .. "_pressed"
 
-    core.register_node("industria:digibutton_" .. def.material .. "_pressed", {
+    local box = { type = "fixed", fixed = { { 2 / 16, -8 / 16, -1.5 / 16, -2 / 16, -6 / 16, 1.5 / 16 } } }
+
+    local nodedef_pressed = {
         description = "Digital Button [" .. def.material .. "]",
         drawtype = "mesh",
-        mesh = "BaseButtonModel_pressed.glb",
+        mesh = "industria_digibutton_pressed.glb",
         tiles = { def.texture.pressed },
-        drop = "industria:digibutton_" .. def.material,
-        node_box = {
-            type = "fixed",
-            fixed = {
-                { 2 / 16, -8 / 16, -1.5 / 16,
-                    -2 / 16, -6 / 16, 1.5 / 16 },
-            }
-        },
-        selection_box = {
-            type = "fixed",
-            fixed = {
-                { 2 / 16, -8 / 16, -1.5 / 16,
-                    -2 / 16, -6 / 16, 1.5 / 16 },
-            }
-        },
+        drop = nodename,
+        node_box = box,
+        selection_box = box,
         paramtype = "light",
         paramtype2 = "wallmounted",
         is_ground_content = false,
-        industria_props = { is_button = true, states = { pressed = { value = 1, iotype = 0, dtype = "BOOL" } }, material = def.material },
-        groups = { dig_immediate = 2, industria_signal_digital = 1, industria_iounit = 1, not_in_creative_inventory = 1 },
-        on_rightclick = on_rightclick_callback,
-        after_dig_node = after_dig_callback
-    });
+        industria_props = { is_button = true, pressed = true, material = def.material },
+        groups = { dig_immediate = 2, not_in_creative_inventory = 1 },
+        on_rightclick = on_rightclick_callback
+    };
 
-    core.register_node("industria:digibutton_" .. def.material, {
+    local nodedef = {
         description = "Digital Button [" .. def.material .. "]",
         drawtype = "mesh",
-        mesh = "BaseButtonModel.glb",
+        mesh = "industria_digibutton.glb",
+        drop = nodename,
         tiles = { def.texture.default },
-        node_box = {
-            type = "fixed",
-            fixed = {
-                { 2 / 16, -8 / 16, -1.5 / 16,
-                    -2 / 16, -6 / 16, 1.5 / 16 },
-            }
-        },
-        selection_box = {
-            type = "fixed",
-            fixed = {
-                { 2 / 16, -8 / 16, -1.5 / 16,
-                    -2 / 16, -6 / 16, 1.5 / 16 },
-            }
-        },
+        node_box = box,
+        selection_box = box,
         paramtype = "light",
         paramtype2 = "wallmounted",
         is_ground_content = false,
-        industria_props = { is_button = true, states = { pressed = { value = 0, iotype = 0, dtype = "BOOL" } }, material = def.material },
-        groups = { dig_immediate = 2, industria_signal_digital = 1, industria_iounit = 1 },
-        on_rightclick = on_rightclick_callback,
-        after_dig_node = after_dig_callback,
-        after_place_node = after_place_callback
-    });
+        industria_props = { is_button = true, pressed = false, material = def.material },
+        groups = { dig_immediate = 2, },
+        on_rightclick = on_rightclick_callback
+    };
+
+    Industria.IOStatesBuilder("industria:basebutton")
+        :addState("pressed")
+        :generateInputFunction(function(iounit)
+            local node = core.get_node_or_nil(iounit.pos_block)
+            if not node or node.name == "ignore" then
+                return false
+            end
+            local _def = core.registered_nodes[node.name]
+            return _def and _def.industria_props and _def.industria_props.pressed
+        end, "BOOL")
+        :build()
+        :register()
+
+
+    Industria.registerIOUnitNode("industria:basebutton", nodename, nodedef)
+    Industria.registerIOUnitNode("industria:basebutton", nodename_pressed, nodedef_pressed)
 end
 
 Industria.register_digital_button({

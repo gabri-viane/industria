@@ -3,7 +3,7 @@ core.register_tool("industria:iolinker",
     {
         short_description = "IO Linker",
         description = "The IO Linker permits to link IO modules to a Control Unit",
-        inventory_image = "IOLinker.png",
+        inventory_image = "industria_IOLinker.png",
         tool_capabilities = {
         },
         node_placement_prediction = nil,
@@ -42,8 +42,8 @@ core.register_tool("industria:iolinker",
                     local iounit = core.deserialize(second)
                     Industria.formspecs:showIOLinkForm(placer:get_player_name(), unit, iounit)
                     --core.chat_send_player(placer:get_player_name(), "Linked");
-                    --itemstack:get_meta():set_string("industria:io:link:first", "");
-                    --itemstack:get_meta():set_string("industria:io:link:second", "");
+                    itemstack:get_meta():set_string("industria:io:link:first", "");
+                    itemstack:get_meta():set_string("industria:io:link:second", "");
                 end
             else
                 sendPlayerMsg(placer:get_player_name(), "Linker cleared")

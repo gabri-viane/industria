@@ -57,8 +57,8 @@ end
 core.register_node("industria:baseunit", {
     description = "Base Unit",
     drawtype = "mesh",
-    mesh = "BaseModelController.glb",
-    tiles = { "BaseController.png" },
+    mesh = "industria_basecontroller.glb",
+    tiles = { "industria_base_controller.png" },
     node_box = {
         type = "fixed",
         fixed = {
