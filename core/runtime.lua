@@ -279,7 +279,6 @@ core.register_globalstep(function(dtime)
             if value.interp.cycle == nil and --Prendo l'unità
                 unit ~= nil then             --Se esiste la disabilito
                 Industria.runtime:disableUnit(unit);
-                        core.chat_send_all("disabled")
             else
                 local th = coroutine.create(function()
                     Industria.runtime.iounits:executeCopy(value.interp, unit, 0)
@@ -288,7 +287,6 @@ core.register_globalstep(function(dtime)
                     if not ok and        --Errore nell'esecuzione del ciclo dell'unità
                         unit ~= nil then --Se esiste la disabilito
                         Industria.runtime:disableUnit(unit);
-                        core.chat_send_all(err3)
                     else
                         Industria.runtime.iounits:executeCopy(value.interp, unit, 1)
                     end
