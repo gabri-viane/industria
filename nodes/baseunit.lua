@@ -66,7 +66,14 @@ core.register_node("industria:baseunit", {
                 1 / 16, 0.5 / 16, 2 / 16 },
         }
     },
-    paramtype = "none",
+    selection_box = {
+        type = "fixed",
+        fixed = {
+            { -1 / 16, -4.5 / 16, 8 / 16,
+                1 / 16, 0.5 / 16, 2 / 16 },
+        }
+    },
+    paramtype = "light",
     paramtype2 = "facedir",
     is_ground_content = false,
     groups = { dig_immediate = 2, industria_controller = 1 },

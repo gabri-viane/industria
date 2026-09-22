@@ -1045,4 +1045,4 @@ Saving (`controllers`, `iounits`, current environments) happens:
 
 | Command | Description |
 |---|---|
-| `/tmp` | Prints the serialized `Industria.controllers.units` table to all players in chat (debug/inspection command) |
+| `/industria_units` | Prints the serialized `Industria.controllers.units` table to all players in chat (debug/inspection command) |

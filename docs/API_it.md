@@ -1037,4 +1037,4 @@ Il salvataggio (`controllers`, `iounits`, ambienti correnti) avviene:
 
 | Comando | Descrizione |
 |---|---|
-| `/tmp` | Stampa a tutti i giocatori in chat la tabella serializzata di `Industria.controllers.units` (comando di debug/ispezione) |
+| `/industria_units` | Stampa a tutti i giocatori in chat la tabella serializzata di `Industria.controllers.units` (comando di debug/ispezione) |

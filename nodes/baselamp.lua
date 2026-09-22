@@ -60,6 +60,9 @@ function Industria.register_base_lamp(def)
             if not node or node.name == "ignore" then
                 return
             end
+            if value == 0 then --Se uso interi come bool allora 0 è false
+                value = false
+            end
             if value and node.name ~= nodename_on then
                 node.name = nodename_on
                 core.swap_node(iounit.pos_block, node)

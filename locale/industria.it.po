@@ -1,0 +1,24 @@
+msgid ""
+msgstr ""
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Error"
+msgstr "Errore"
+
+msgid "The selected node is not a valid Unit."
+msgstr "Il nodo selezionato non è un'Unità valida."
+
+msgid "You have no access to the Unit."
+msgstr "Non hai accesso all'Unità."
+
+msgid "The IOUnit couldn't not be found: maybe it's not loaded."
+msgstr "Non è stato possibile trovare l'IOUnit: potrebbe non essere caricata."
+
+msgid "The Unit couldn't not be found: maybe it's not loaded."
+msgstr "Non è stato possibile trovare l'Unità: potrebbe non essere caricata."
+
+msgid "Selected IOUnit is not owned by the player."
+msgstr "L'IOUnit selezionata non è di proprietà del giocatore."
+
+msgid "Selected IOUnit is invalid"
+msgstr "L'IOUnit selezionata non è valida"

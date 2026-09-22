@@ -13,7 +13,7 @@ Industria.formspecs = {
 function Industria.formspecs.errorFormspec(msg)
     return table.concat({ "formspec_version[6]",
         "size[5.5,2.5]",
-        "label[0.75,0.5;Error:]",
+        "label[0.75,0.5;" .. Industria.translate("Error") .. ":]",
         "label[0.75,1;", msg, "]" })
 end
 

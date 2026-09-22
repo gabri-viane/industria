@@ -1,5 +1,8 @@
 Industria = {};
 
+local S, PS = core.get_translator("industria")
+Industria.translate = S
+
 Industria.path = core.get_modpath("industria");
 local worldmotd_path = core.get_worldpath();
 
@@ -15,7 +18,7 @@ if not (core.path_exists(Industria.datapath)) then
 end
 
 
-core.register_chatcommand("tmp", {
+core.register_chatcommand("industria_units", {
     func = function(name, param)
         core.chat_send_all(core.serialize(Industria.controllers.units));
     end
@@ -49,15 +52,15 @@ programm_save();
 local loadres = Industria.controllers:deserialize();
 
 if not loadres.completed then
-    core.chat_send_all(loadres.msg);
+    core.log("error", "[INDUSTRIA:DESERIALIZATION] " .. loadres.msg)
 else
-    core.chat_send_all("Controllers loaded");
+    core.log("info", "[INDUSTRIA:DESERIALIZATION] Controllers loaded");
 end
 
 loadres = Industria.iounits:deserialize();
 
 if not loadres.completed then
-    core.chat_send_all(loadres.msg);
+    core.log("error", "[INDUSTRIA:DESERIALIZATION] " .. loadres.msg)
 else
-    core.chat_send_all("IOUnits loaded");
+    core.log("info", "[INDUSTRIA:DESERIALIZATION] IOUnits loaded");
 end

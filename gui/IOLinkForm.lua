@@ -80,11 +80,11 @@ function Industria.formspecs.callbacks:IOLinkFormCallback(player_name, fields)
         local res = Industria.iounits:getIOUnit(iounit_code);
         local iounit = res.data;
         if not res.completed or not iounit then
-            closeFS("Selected IOUnit is invalid");
+            closeFS(Industria.translate("Selected IOUnit is invalid"));
             return;
         end
         if iounit.owner ~= player_name then
-            closeFS("Selected IOUnit is not owned by the player");
+            closeFS(Industria.translate("Selected IOUnit is not owned by the player."));
             return;
         end
 
@@ -106,14 +106,15 @@ end
 ---@param pos_iounit any The position of the IO unit saved int the IOLinker
 function Industria.formspecs:showIOLinkForm(playername, pos_unit, pos_iounit)
     local unit_node_simple = core.get_node_or_nil(pos_unit)
-    if unit_node_simple == nil then
-        sendPlayerMsg(playername, core.colorize("red", "The Unit couldn't not be found: maybe it's not loaded."));
+    if unit_node_simple == nil or unit_node_simple.name == "ignore" then
+        sendPlayerMsg(playername, core.colorize("red", Industria.translate("The Unit couldn't not be found: maybe it's not loaded.")));
         return;
     end
 
     local iounit_node_simple = core.get_node_or_nil(pos_iounit)
-    if iounit_node_simple == nil then
-        sendPlayerMsg(playername, core.colorize("red", "The IOUnit couldn't not be found: maybe it's not loaded."));
+    if iounit_node_simple == nil  or iounit_node_simple.name == "ignore" then
+        sendPlayerMsg(playername,
+        core.colorize("red", Industria.translate("The IOUnit couldn't not be found: maybe it's not loaded.")));
         return;
     end
 
@@ -132,7 +133,7 @@ function Industria.formspecs:showIOLinkForm(playername, pos_unit, pos_iounit)
 
         --Devo controllare se l'unità è protetta
         if res.data.protected and playername ~= res.data.owner then
-            sendPlayerMsg(playername, core.colorize("red", "You have no access to the unit."));
+            sendPlayerMsg(playername, core.colorize("red", Industria.translate("You have no access to the Unit.")));
             return;
         end
 
@@ -145,6 +146,6 @@ function Industria.formspecs:showIOLinkForm(playername, pos_unit, pos_iounit)
             IOLinkForm({ unit_model, unit_texture }, { iounit_model, iounit_texture })
         );
     else
-        sendPlayerMsg(playername, core.colorize("red", "The selected block is not a valid Unit"));
+        sendPlayerMsg(playername, core.colorize("red", Industria.translate("The selected node is not a valid Unit.")));
     end
 end
