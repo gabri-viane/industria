@@ -2,3 +2,6 @@ _blockbench
 .vscode
 _images
 _pixelorama
+_inkscape
+.github/*
+mod.zip

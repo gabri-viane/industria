@@ -681,8 +681,8 @@ local function new_interpreter(ast, unit)
         end,
 
         -- ── Tempo ────────────────────────────────────────────
-        -- TIME(): restituisce il tempo CPU in secondi (simulazione, non wall clock).
-        TIME          = function(_) return os.clock() end,
+        -- TIME(): restituisce il tempo di simulazione.
+        TIME          = function(_) return core.get_gametime() end,
     }
 
     -- ── Gestione dei tipi in fase di esecuzione ──────────────

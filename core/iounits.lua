@@ -128,9 +128,9 @@ function Industria.iounits:unregisterIOUnit(iounit_code, owner)
     end
     --Cerca se il giocatore "owner" la possiede
     local idx = table.indexof(self.ids[iounit.owner], iounit_code); -- self.ids[owner], iounit_code);
-    --if idx == -1 then
-    --    return fnresult(false, "The player doesn't own the IOUnit");
-    --end
+    if idx == -1 then
+        return fnresult(false, "The player doesn't own the IOUnit");
+    end
 
     if iounit.reference_unit then
         --Per prevenire che la funzioni richiami a sua volta questa funzione per eliminare il

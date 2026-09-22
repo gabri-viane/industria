@@ -2,7 +2,7 @@ function Industria.register_base_lamp(def)
     local def_texture_off = "industria_baselamp_off.png"
     local def_texture_on = "industria_baselamp_on.png"
     if def.material == nil then
-        def.material = "unknwon"
+        def.material = "unknown"
     end
 
     if def.texture == nil then
@@ -15,9 +15,9 @@ function Industria.register_base_lamp(def)
             def.texture.on = def_texture_on;
         end
     end
-    local nodename_on = "industria:baselamp_" .. def.material
-    local nodename_off = nodename_on .. "_off"
-    nodename_on = nodename_on .. "_on"
+    local nodename = "industria:baselamp_" .. def.material
+    local nodename_off = nodename .. "_off"
+    local nodename_on = nodename .. "_on"
 
     --local box = { type = "fixed", fixed = { { 2 / 16, -8 / 16, -1.5 / 16, -2 / 16, -6 / 16, 1.5 / 16 } } }
 
@@ -53,7 +53,7 @@ function Industria.register_base_lamp(def)
         groups = { dig_immediate = 2 }
     };
 
-    Industria.IOStatesBuilder("industria:baselamp")
+    Industria.IOStatesBuilder(nodename)
         :addState("lighted")
         :generateOutputFunction(function(iounit, value)
             local node = core.get_node_or_nil(iounit.pos_block)
@@ -72,8 +72,8 @@ function Industria.register_base_lamp(def)
         :register()
 
 
-    Industria.registerIOUnitNode("industria:baselamp", nodename_on, nodedef_on)
-    Industria.registerIOUnitNode("industria:baselamp", nodename_off, nodedef_off)
+    Industria.registerIOUnitNode(nodename, nodename_on, nodedef_on)
+    Industria.registerIOUnitNode(nodename, nodename_off, nodedef_off)
 end
 
 Industria.register_base_lamp({
