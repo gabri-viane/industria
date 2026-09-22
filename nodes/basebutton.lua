@@ -31,7 +31,7 @@ end
 function Industria.register_digital_button(def)
     local def_texture = "industria_base_button.png"
     if def.material == nil then
-        def.material = "unknwon"
+        def.material = "unknown"
     end
 
     if def.texture == nil then
@@ -81,7 +81,7 @@ function Industria.register_digital_button(def)
         on_rightclick = on_rightclick_callback
     };
 
-    Industria.IOStatesBuilder("industria:basebutton")
+    Industria.IOStatesBuilder(nodename)
         :addState("pressed")
         :generateInputFunction(function(iounit)
             local node = core.get_node_or_nil(iounit.pos_block)
@@ -95,8 +95,8 @@ function Industria.register_digital_button(def)
         :register()
 
 
-    Industria.registerIOUnitNode("industria:basebutton", nodename, nodedef)
-    Industria.registerIOUnitNode("industria:basebutton", nodename_pressed, nodedef_pressed)
+    Industria.registerIOUnitNode(nodename, nodename, nodedef)
+    Industria.registerIOUnitNode(nodename, nodename_pressed, nodedef_pressed)
 end
 
 Industria.register_digital_button({

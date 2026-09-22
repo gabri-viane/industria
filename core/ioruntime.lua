@@ -161,6 +161,16 @@ function Industria.runtime.iounits:link(unit, iounit, iounitStateName, envVarNam
         return res
     end
 
+    --Se ho già collegato la variabile della Unit a un'altra IOUnit allora la rimuovo prima di collegarla a questa
+    if unit.io_units[envVarName] then
+        local result = Industria.iounits:getIOUnit(unit.io_units[envVarName])
+        local _iounit = result.data
+        if result.completed and _iounit then
+            local state_name = Industria.iounits.getLinkedState(_iounit, envVarName)
+            self:unlink(_iounit, state_name)
+        end
+    end
+
     --Imposto per la variabile dell'IOUnit la variabile della Unit collegata
     iounit.io_ports[iounitStateName].linked_var = envVarName;
     iounit.io_ports[iounitStateName].type       = type;

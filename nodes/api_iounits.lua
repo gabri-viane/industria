@@ -184,22 +184,3 @@ function Industria.registerIOUnitNode(iounit_name, node_name, node_definition,
 
     core.register_node(node_name, node_definition)
 end
-
-Industria.IOStatesBuilder("industria:lamp")
-    :addState("ispowered"):generateInputFunction(function(iounit)
-    local cur_node = core.get_node_or_nil(iounit.pos_block)
-    return cur_node.name == "industria:lamp:on";
-end, "BOOL"):build()
-    :addState("light"):generateOutputFunction(function(iounit, value)
-    local cur_node = core.get_node_or_nil(iounit.pos_block)
-    if not cur_node or cur_node.name == "ignore" then
-        return
-    end
-    if value then
-        cur_node.name = "industria:lamp:on"
-    else
-        cur_node.name = "industria:lamp:off"
-    end
-    core.swap_node(iounit.pos_block, cur_node);
-end, "BOOL"):build()
-    :register()
