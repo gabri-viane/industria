@@ -55,7 +55,7 @@ function Industria.runtime.iounits:tryRegisterIOUnitToRuntime(unit_code, iounit,
     -- Segno nell'IORuntime che per la Unit è collegata la IOUnit (INPUT)
     if type == 0 or type == 2 then
         if self.inputs[unit_code] == nil then
-            return fnresult(false, "Unit is not registered to IORuntime: can't link the IOUnit", nil)
+            return fnresult(false, Industria.translate("unit_not_registerd_ioruntime"), nil)
         end
         --Se l'ho già registrata negli input non la registro di nuovo
         local index = table.indexof(self.inputs[unit_code], iounit.iounit_code)
@@ -66,7 +66,7 @@ function Industria.runtime.iounits:tryRegisterIOUnitToRuntime(unit_code, iounit,
     -- Segno nell'IORuntime che per la Unit è collegata la IOUnit (OUTPUT)
     if type == 1 or type == 2 then
         if self.outputs[unit_code] == nil then
-            return fnresult(false, "Unit is not registered to IORuntime: can't link the IOUnit", nil)
+            return fnresult(false, Industria.translate("unit_not_registerd_ioruntime"), nil)
         end
         --Se l'ho già registrata negli output non la registro di nuovo
         local index = table.indexof(self.outputs[unit_code], iounit.iounit_code)
@@ -126,34 +126,34 @@ end
 function Industria.runtime.iounits:link(unit, iounit, iounitStateName, envVarName, type)
     --Controllo il nome della variabile dell'ambiente da collegare
     if not envVarName or #envVarName < 1 then
-        return fnresult(false, "Unit's variable is invalid.", nil);
+        return fnresult(false, Industria.translate("st_variable_invalid"), nil);
     end
     --Controllo se la Unit esiste
     local unit_code = Industria.units.getUnitCode(unit);
     if not unit_code then
-        return fnresult(false, "Unit is invalid.", nil);
+        return fnresult(false, Industria.translate("unitcode_is_invalid"), nil);
     end
     --Controllo se la IOUnit è già collegata ad unità differente
     if iounit.reference_unit and iounit.reference_unit ~= unit_code then
-        return fnresult(false, "IOUnit is already linked to a different Unit.")
+        return fnresult(false, Industria.translate("iounit_alreay_bound_to_another_unit"))
     end
     --Controllo se l'interprete della Unit esiste
     local data = Industria.runtime.units[unit_code]
     if not data or not data.interp then
-        return fnresult(false, "Unit doesn't have an interpreter associated", nil)
+        return fnresult(false, Industria.translate("unit_no_interp"), nil)
     end
     --Controllo se l'environment dell'interprete è stato creato
     local env = data.interp:getEnv()
     if not env then
-        return fnresult(false, "Unit's interpreter doesn't have an environment associated", nil)
+        return fnresult(false, Industria.translate("unit_interp_no_env"), nil)
     end
     --Controllo se l'environment contiene la variabile da collegare
     if not env[envVarName] then
-        return fnresult(false, "Unit doesn't define the variable '" .. envVarName .. "'", nil)
+        return fnresult(false, Industria.translate("unit_no_st_variable @1", envVarName), nil)
     end
     -- Controllo se la iounit contiene tra le porte disponibili la variabile da collegare
     if not iounit.io_ports[iounitStateName] then
-        return fnresult(false, "IOUnit doesn't have the state '" .. iounitStateName .. "'", nil)
+        return fnresult(false, Industria.translate("iounit_no_state @1", iounitStateName), nil)
     end
 
     local res = self:tryRegisterIOUnitToRuntime(unit_code, iounit, type)
@@ -194,18 +194,18 @@ function Industria.runtime.iounits:unlink(iounit, iounitStateName)
     end
     --Controllo se la Unit esiste
     if not unit_code then
-        return fnresult(false, "Unit is invalid.", nil);
+        return fnresult(false, Industria.translate("unitcode_is_invalid"), nil);
     end
     local unit = Industria.controllers.units[unit_code]
     if unit == nil then
-        return fnresult(false, "Unit doesn't exists", nil)
+        return fnresult(false, Industria.translate("unit_not_exists @1", unit_code), nil)
     end
 
     --Devo gestire se l'unlink è di tutti gli stati o solo uno
     if iounitStateName then
         -- Controllo se la iounit contiene tra le porte disponibili la variabile da collegare
         if not iounit.io_ports[iounitStateName] then
-            return fnresult(false, "IOUnit doesn't have the state '" .. iounitStateName .. "'", nil)
+            return fnresult(false, Industria.translate("iounit_no_state @1", iounitStateName), nil)
         end
         -- Rimuovo il collegamento
         if unit.io_units[iounit.io_ports[iounitStateName].linked_var] then

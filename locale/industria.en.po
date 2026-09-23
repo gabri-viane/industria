@@ -1,0 +1,105 @@
+msgid ""
+msgstr ""
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "error"
+msgstr "Error"
+
+msgid "node_not_valid_unit"
+msgstr "The selected node is not a valid Unit."
+
+msgid "no_access_to_unit"
+msgstr "You have no access to the Unit."
+
+msgid "iounit_not_found"
+msgstr "The IOUnit couldn't not be found: maybe it's not loaded."
+
+msgid "unit_not_found"
+msgstr "The Unit couldn't not be found: maybe it's not loaded."
+
+msgid "iounit_not_owned_by_player"
+msgstr "Selected IOUnit is not owned by the player."
+
+msgid "iounit_is_invalid"
+msgstr "Selected IOUnit is invalid"
+
+msgid "unitcode_is_invalid"
+msgstr "Unit Code is not valid"
+
+msgid "unit_exists"
+msgstr "Unit already exists"
+
+msgid "unit_created_with_code @1"
+msgstr "Unit created with code @1"
+
+msgid "owner_unitid_not_defined"
+msgstr "Owner and/or Unit ID are not defined"
+
+msgid "unit_not_exists @1"
+msgstr "Unit '@1' doesn't exists"
+
+msgid "player_no_permission_unit"
+msgstr "Player doesn't have permissions on this Unit"
+
+msgid "unit_removed"
+msgstr "The Unit has been removed"
+
+msgid "no_iounit_removed_from_unit"
+msgstr "No IOUnit has been removed from the Unit"
+
+msgid "unit_not_contains_iounit"
+msgstr "Unit dosen't contain the specified IOUnit"
+
+msgid "unit_not_registerd_ioruntime"
+msgstr "Unit is not registered to IORuntime: can't link the IOUnit"
+
+msgid "st_variable_invalid"
+msgstr "Unit's ST Variable is invalid"
+
+msgid "iounit_alreay_bound_to_another_unit"
+msgstr "IOUnit is already linked to a different Unit"
+
+msgid "unit_no_interp"
+msgstr "Unit doesn't have an interpreter associated"
+
+msgid "unit_interp_no_env"
+msgstr "Unit's interpreter doesn't have an environment associated"
+
+msgid "unit_no_st_variable @1"
+msgstr "Unit doesn't define the ST Variable '@1'"
+
+msgid "iounit_no_state @1"
+msgstr "IOUnit doesn't have the state '@1'"
+
+msgid "iounit_owner_not_valid"
+msgstr "Owner of the IOUnit is invalid"
+
+msgid "iounit_code_invalid"
+msgstr "IOUnit Code is invalid"
+
+msgid "node_invalid"
+msgstr "Node is invalid"
+
+msgid "unregistred_node @1"
+msgstr "'@1' is not a registered node"
+
+msgid "node_not_iounit"
+msgstr "Node is not an Industria IOUnit"
+
+msgid "invalid_io_ref_name"
+msgstr "Node doesn't contain a name reference to a registered IOUnit"
+
+msgid "owner_iounitcode_not_defined"
+msgstr "Owner and/or IOUnitCode are not defined"
+
+msgid "iounit_not_exists @1"
+msgstr "IOUnit '@1' doesn't exists"
+
+msgid "player_no_permission_iounit"
+msgstr "Player doesn't have permissions on this IOUnit"
+
+msgid "iounit_removed"
+msgstr "The IOUnit has been removed"
+
+msgid "iounit_state_not_exists_or_different"
+msgstr "Industria IOUnit doesn't define the state as required"

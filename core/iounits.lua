@@ -54,31 +54,31 @@ end
 ---@return Result<IOUnit|nil> #Returns the newly created IOUnit
 function Industria.iounits:registerIOUnit(owner, pos)
     if owner == nil then
-        return fnresult(false, "Owner of the IOUnit is invalid", nil);
+        return fnresult(false, Industria.translate("iounit_owner_not_valid"), nil);
     end
 
     local iounit_code = Industria.iounits.getIOUnitCode(pos)
     if not iounit_code then
-        return fnresult(false, "IOUnit Code is invalid", nil);
+        return fnresult(false, Industria.translate("iounit_code_invalid"), nil);
     end
 
     local node = core.get_node_or_nil(pos)
     if not node then
-        return fnresult(false, "Node is invalid", nil);
+        return fnresult(false, Industria.translate("node_invalid"), nil);
     end
 
     node = core.registered_nodes[node.name];
     if not node then
-        return fnresult(false, "Node is not an registered", nil);
+        return fnresult(false, Industria.translate("unregistred_node @1", node.name), nil);
     end
 
     if not node.industria_props or not node.groups.industria_iounit then
-        return fnresult(false, "Node is not an Industria IOUnit", nil);
+        return fnresult(false, Industria.translate("node_not_iounit"), nil);
     end
 
     local data = node.industria_props
     if not data.iounit_name then
-        return fnresult(false, "Node doesn't contain a name reference to a registered IOUnit", nil);
+        return fnresult(false, Industria.translate("invalid_io_ref_name"), nil);
     end
 
 
@@ -116,20 +116,20 @@ end
 function Industria.iounits:unregisterIOUnit(iounit_code, owner)
     --Se sono nulli allora non provare nemmeno a cercarla
     if not iounit_code or not owner then
-        return fnresult(false, "Owner or IOUnitCode is nil");
+        return fnresult(false, Industria.translate("owner_iounitcode_not_defined"));
     end
     --Se non esiste allora esci
     local iounit = self.registered[iounit_code];
     if iounit == nil then
-        return fnresult(false, "IOUnit doesn't exists");
+        return fnresult(false, Industria.translate("iounit_not_exists @1", iounit_code));
     end
     if self.ids[iounit.owner] == nil then --self.ids[owner] == nil then
-        return fnresult(false, "The owner is not valid");
+        return fnresult(false, Industria.translate("iounit_owner_not_valid"));
     end
     --Cerca se il giocatore "owner" la possiede
     local idx = table.indexof(self.ids[iounit.owner], iounit_code); -- self.ids[owner], iounit_code);
     if idx == -1 then
-        return fnresult(false, "The player doesn't own the IOUnit");
+        return fnresult(false, Industria.translate("player_no_permission_iounit"));
     end
 
     if iounit.reference_unit then
@@ -141,7 +141,7 @@ function Industria.iounits:unregisterIOUnit(iounit_code, owner)
     self.registered[iounit_code] = nil;
     table.remove(self.ids[iounit.owner], idx); --self.ids[owner], idx)
 
-    return fnresult(true, "IOUnit removed");
+    return fnresult(true, Industria.translate("iounit_removed"));
 end
 
 --- Returns an IOUnit, if present, binded to a player, knowing the iounit's Code.
@@ -150,11 +150,11 @@ end
 function Industria.iounits:getIOUnit(iounit_code)
     --Se sono nulli allora non provare nemmeno a cercarla
     if not iounit_code then
-        return fnresult(false, "IOUnitCode is nil");
+        return fnresult(false, Industria.translate("iounit_code_invalid"));
     end
     --Se non esiste allora esci
     if self.registered[iounit_code] == nil then
-        return fnresult(false, "Unit doesn't exists: '" .. iounit_code .. "'");
+        return fnresult(false, Industria.translate("unit_not_exists @1", iounit_code));
     end
 
     return fnresult(true, nil, self.registered[iounit_code]);
@@ -166,16 +166,16 @@ end
 function Industria.iounits.getAvailableStates(node_name)
     local node = core.registered_nodes[node_name];
     if not node then
-        return fnresult(false, "Node doesn't exists", nil);
+        return fnresult(false, Industria.translate("unregistred_node @1",node_name), nil);
     end
 
     if not node.industria_props or not node.groups.industria_iounit then
-        return fnresult(false, "Node is not a valid Industria IOUnit", nil);
+        return fnresult(false, Industria.translate("node_not_iounit"), nil);
     end
 
     local data = node.industria_props
     if not data.iounit_name then
-        return fnresult(false, "Node doesn't contain a name reference to a registered IOUnit", nil);
+        return fnresult(false, Industria.translate("invalid_io_ref_name"), nil);
     end
 
     -- Prendo tutti gli stati possibili per questo blocco
@@ -227,21 +227,21 @@ end
 function Industria.iounits.getStateData(node_name, state_name)
     local node = core.registered_nodes[node_name];
     if not node then
-        return fnresult(false, "Node doesn't exists", nil);
+        return fnresult(false, Industria.translate("unregistred_node @1",node_name), nil);
     end
 
     if not node.industria_props or not node.groups.industria_iounit then
-        return fnresult(false, "Node is not a valid Industria IOUnit", nil);
+        return fnresult(false, Industria.translate("node_not_iounit"), nil);
     end
 
     local data = node.industria_props
     if not data.iounit_name then
-        return fnresult(false, "Node doesn't contain a name reference to a registered IOUnit", nil);
+        return fnresult(false, Industria.translate("invalid_io_ref_name"), nil);
     end
 
     local state = Industria.runtime.iounits.states[data.iounit_name][state_name]
     if not state or not state.value or not state.iotype or not state.dtype then
-        return fnresult(false, "Industria IOUnit doesn't define the required state", nil);
+        return fnresult(false, Industria.translate("iounit_state_not_exists_or_different"), nil);
     end
 
     return fnresult(true, nil, state);

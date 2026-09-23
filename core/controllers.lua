@@ -16,7 +16,7 @@ function Industria.controllers:serialize()
     f:write(text);
     f:flush();
     f:close();
-    return fnresult(true, "World Controllers saved", nil);
+    return fnresult(true, "World's Controllers saved.", nil);
 end
 
 ---Deserialize the file "controllers.dt" in the mod's folder of the world and loads the ids and units saved.
@@ -32,10 +32,10 @@ function Industria.controllers:deserialize()
     f:close();
     local data = core.deserialize(text, true);
     if data == nil then
-        return fnresult(false, "Data not loaded", nil);
+        return fnresult(false, "Controllers' data file not loaded.", nil);
     end
     if data.ids == nil or data.units == nil then
-        return fnresult(false, "Data doesn't contain the required fields", nil);
+        return fnresult(false, "Controllers' data file doesn't contain the required fields.", nil);
     end
     self.ids = data.ids;
     self.units = data.units;
@@ -43,7 +43,7 @@ function Industria.controllers:deserialize()
     --Carica le unità in runtime
     for unit_code, unit in pairs(self.units) do
         local th = coroutine.create(function()
-            local res = Industria.runtime:registerToRuntime(unit,false);
+            local res = Industria.runtime:registerToRuntime(unit, false);
             if not res.completed then
                 core.log("warning", "Registration to runtime of: '" .. unit_code .. "' was not completed:\n" .. res.msg);
             end
@@ -63,11 +63,11 @@ function Industria.controllers:addUnit(unit_id, owner)
     local unit_code = Industria.units.toUnitCode(unit_id, owner);
     -- Controllo se non ho generato il codice
     if unit_code == nil then
-        return fnresult(false, "UnitCode not valid");
+        return fnresult(false, Industria.translate("unitcode_is_invalid"));
     end
     -- Se esiste già un'unità allora ritorna un'errore
     if self.units[unit_code] ~= nil then
-        return fnresult(false, "Unit already exists");
+        return fnresult(false, Industria.translate("unit_exists"));
     end
     --Se non esiste la tabella di id associata al giocatore allora generale
     if self.ids[owner] == nil then
@@ -93,7 +93,7 @@ function Industria.controllers:addUnit(unit_id, owner)
     --Registra l'unità per accettare IOUnits
     Industria.runtime.iounits:registerUnitToIORuntime(unit_code)
 
-    return fnresult(true, "Unit created with code " .. unit_code, unit);
+    return fnresult(true, Industria.translate("unit_created_with_code @1", unit_code), unit);
 end
 
 --- Returns a Unit, if present, binded to a player, knowing the unit's Code (ID+Owner name).
@@ -102,11 +102,11 @@ end
 function Industria.controllers:getUnit(unit_code)
     --Se sono nulli allora non provare nemmeno a cercarla
     if not unit_code then
-        return fnresult(false, "Owner or UnitID is null");
+        return fnresult(false, Industria.translate("owner_unitid_not_defined"));
     end
     --Se non esiste allora esci
     if self.units[unit_code] == nil then
-        return fnresult(false, "Unit doesn't exists: '" .. unit_code .. "'");
+        return fnresult(false, Industria.translate("unit_not_exists @1", unit_code));
     end
 
     return fnresult(true, nil, self.units[unit_code]);
@@ -127,11 +127,11 @@ function Industria.controllers:removeController(unit_id, owner)
     local unit_code = Industria.units.toUnitCode(unit_id, owner);
     --Se è nullo allora non provare nemmeno a cercarla
     if not unit_code then
-        return fnresult(false, "Owner or UnitID is null");
+        return fnresult(false, Industria.translate("owner_unitid_not_defined"));
     end
     --Se non esiste allora esci
     if self.units[unit_code] == nil then
-        return fnresult(false, "Unit doesn't exists");
+        return fnresult(false, Industria.translate("unit_not_exists", unit_code));
     end
 
     local unit = self.units[unit_code];
@@ -139,7 +139,7 @@ function Industria.controllers:removeController(unit_id, owner)
     --Rimuovi dagli id delle unità del giocatore quella corrente
     local idx = table.indexof(self.ids[owner], unit_code);
     if idx == -1 then
-        return fnresult(false, "Owner doesn't have permissions on this unit");
+        return fnresult(false, Industria.translate("player_no_permission_unit"));
     end
 
     --Rimuove l'unità dall'ioruntime e unlinka tutti gli IOUnits
@@ -155,7 +155,7 @@ function Industria.controllers:removeController(unit_id, owner)
     --Rimuove l'interprete/unità dal RT
     Industria.runtime:removeUnit(unit);
 
-    return fnresult(true, "Unit removed");
+    return fnresult(true, Industria.translate("unit_removed"));
 end
 
 ---Removes a previously associated IOUnit to an Unit. This function should be called when an IOUnit is removed or
@@ -167,7 +167,7 @@ end
 function Industria.controllers:removeIOUnitFromController(unit_code, io_unit_code, deleteUnit)
     --Se il codice è nullo allora faccio finta di averla rimossa
     if io_unit_code == nil then
-        return fnresult(true, "No IOUnit was removed");
+        return fnresult(true, Industria.translate("no_iounit_removed_from_unit"));
     end
 
     local res_unit = self:getUnit(unit_code);
@@ -177,12 +177,12 @@ function Industria.controllers:removeIOUnitFromController(unit_code, io_unit_cod
     --Unità da cui rimuovere il codice
     local unit = res_unit.data;
     if unit == nil or unit.io_units == nil then
-        return fnresult(false, "Unit dosen't contain the IOUnit specified");
+        return fnresult(false, Industria.translate("unit_not_contains_iounit"));
     end
 
     local idx = table.indexof(unit.io_units, io_unit_code);
     if idx == -1 then
-        return fnresult(false, "Unit dosen't contain the IOUnit specified");
+        return fnresult(false, Industria.translate("unit_not_contains_iounit"));
     end
 
     --Se devo eliminare anche l'unità IO allora chiamo la funzione che lo gestisce

@@ -2,23 +2,104 @@ msgid ""
 msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-msgid "Error"
+msgid "error"
 msgstr "Errore"
 
-msgid "The selected node is not a valid Unit."
+msgid "node_not_valid_unit"
 msgstr "Il nodo selezionato non è un'Unità valida."
 
-msgid "You have no access to the Unit."
+msgid "no_access_to_unit"
 msgstr "Non hai accesso all'Unità."
 
-msgid "The IOUnit couldn't not be found: maybe it's not loaded."
+msgid "iounit_not_found"
 msgstr "Non è stato possibile trovare l'IOUnit: potrebbe non essere caricata."
 
-msgid "The Unit couldn't not be found: maybe it's not loaded."
+msgid "unit_not_found"
 msgstr "Non è stato possibile trovare l'Unità: potrebbe non essere caricata."
 
-msgid "Selected IOUnit is not owned by the player."
+msgid "iounit_not_owned_by_player"
 msgstr "L'IOUnit selezionata non è di proprietà del giocatore."
 
-msgid "Selected IOUnit is invalid"
+msgid "iounit_is_invalid"
 msgstr "L'IOUnit selezionata non è valida"
+
+msgid "unitcode_is_invalid"
+msgstr "Codice Unità non valido"
+
+msgid "unit_exists"
+msgstr "L'Unità è già esistente"
+
+msgid "unit_created_with_code @1"
+msgstr "L'Unità è stata creata con il codice @1"
+
+msgid "owner_unitid_not_defined"
+msgstr "Il proprietario e/o l'ID dell'unità non sono definiti"
+
+msgid "unit_not_exists @1"
+msgstr "L'Unità '@1' non esiste"
+
+msgid "player_no_permission_unit"
+msgstr "Il giocatore non ha permessi su quest'Unità"
+
+msgid "unit_removed"
+msgstr "L'Unità è stata rimossa"
+
+msgid "no_iounit_removed_from_unit"
+msgstr "Nessuna Unità IO è stata rimossa dall'Unità"
+
+msgid "unit_not_contains_iounit"
+msgstr "L'Unità non contiene l'Unità IO specificata"
+
+msgid "unit_not_registerd_ioruntime"
+msgstr "L'Unità non è registrata all'IORuntime: non è possibile collegare l'Unità IO"
+
+msgid "st_variable_invalid"
+msgstr "La Variabile ST dell'Unità non è valida"
+
+msgid "iounit_alreay_bound_to_another_unit"
+msgstr "L'Unità IO è già collegata ad un'altra Unità"
+
+msgid "unit_no_interp"
+msgstr "L'Unità non ha un interprete associato"
+
+msgid "unit_interp_no_env"
+msgstr "L'interprete dell'Unità non ha un ambiente associato"
+
+msgid "unit_no_st_variable"
+msgstr "L'Unità non definisce la Variabile ST '@1'"
+
+msgid "iounit_no_state @1"
+msgstr "L'Unità IO non possiede lo stato '@1'"
+
+msgid "iounit_owner_not_valid"
+msgstr "Il prorietario dell'Unità IO non è valido"
+
+msgid "iounit_code_invalid"
+msgstr "Il Codice Unità IO non è valido"
+
+msgid "node_invalid"
+msgstr "Il Nodo non è valido"
+
+msgid "unregistred_node @1"
+msgstr "'@1' non è un Nodo registrato"
+
+msgid "node_not_iounit"
+msgstr "Il Nodo non è un'Unità IO Industria"
+
+msgid "invalid_io_ref_name"
+msgstr "Il Nodo non contiene un nome che referenzia un'Unità IO registrata"
+
+msgid "owner_iounitcode_not_defined"
+msgstr "Il proprietario e/o il Codice Unità IO non sono definiti"
+
+msgid "iounit_not_exists @1"
+msgstr "L'Unità IO '@1' non esiste"
+
+msgid "player_no_permission_iounit"
+msgstr "Il giocatore non ha permessi su queta Unità IO"
+
+msgid "iounit_removed"
+msgstr "L'Unità IO è stata rimossa"
+
+msgid "iounit_state_not_exists_or_different"
+msgstr "L'Unità IO Industria non definisce lo stato richiesto oppure è dichiarato diversamente."
