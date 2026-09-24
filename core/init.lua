@@ -7,12 +7,12 @@ Industria.files = {};
 Industria.controllers = {
     ---Contiene gli id delle unità di un giocatore nel formato:
     ---{nome_owner={codice1, codice2, codice3}}
-    ---@type table<owner, unit_code[]>
-    ids = {},
+    ---@type table<owner, ControllerCODE[]>
+    player_controllers = {},
     ---Contiene le unità con il codice associato nel formato:
     ---{codice1={...},codice2={...}}
-    ---@type table<unit_code,Unit>
-    units = {}
+    ---@type table<ControllerCODE,Controller>
+    registered_controllers = {}
 };
 
 ---Contains all the contents and functions related to the IO units registered in the world:
@@ -23,7 +23,7 @@ Industria.iounits = {
     ids = {},
     ---Contiene le unità di IO con il codice associato, nel formato:
     ---{codice1={...},codice2={...}}
-    ---@type table<io_unit_code,IOUnit>
+    ---@type table<IOUnitCODE,IOUnit>
     registered = {}
 }
 
@@ -41,8 +41,8 @@ Industria.runtime = {
     ---Contiene tutte le unità caricate/create: se un unità non è
     ---presente in questa tabella allora non può essere avviata a runtime
     ---
-    ---@type table<unit_code,RTInfo> Tabella che associa unit_code a {enabled,interpreter}
-    units = {},
+    ---@type table<ControllerCODE,RTInfo> Tabella che associa unit_code a {enabled,interpreter}
+    runtime_units = {},
     ---Contiene tutta la gestione per il runtime delle IOUnits
     ---
     iounits = {}

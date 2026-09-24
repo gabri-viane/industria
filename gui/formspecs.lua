@@ -81,21 +81,11 @@ core.register_on_player_receive_fields(function(player, formname, fields)
     if fncallback ~= nil and type(fncallback) == "function" then
         fncallback(pname, fields);
     end
-    --[[
-    -- Se è il formspec dell'editor ST allora lo gestisco
-    if formname == "Industria:Unit:UnitMainForm" then
-        Industria.formspecs.callbacks:UnitMainFormCallback(pname, fields);
-    elseif formname == "Industria:Unit:Editor" then
-        Industria.formspecs.callbacks:STEditorCallback(pname, fields);
-    elseif formname == "Industria:Unit:SetIDInput" then
-        Industria.formspecs.callbacks:PLCIDInputCallback(pname, fields);
-    end
-    ]] --
 end)
 
 
 dofile(Industria.path .. "/gui/STCodeEditorFS.lua");
-dofile(Industria.path .. "/gui/UnitIDInputFS.lua");
-dofile(Industria.path .. "/gui/UnitMainFormFS.lua");
+dofile(Industria.path .. "/gui/ControllerIDInputFS.lua");
+dofile(Industria.path .. "/gui/ControllerMainFormFS.lua");
 dofile(Industria.path .. "/gui/IOLinkVariableForm.lua");
 dofile(Industria.path .. "/gui/IOLinkForm.lua");

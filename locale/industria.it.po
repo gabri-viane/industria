@@ -103,3 +103,6 @@ msgstr "L'Unità IO è stata rimossa"
 
 msgid "iounit_state_not_exists_or_different"
 msgstr "L'Unità IO Industria non definisce lo stato richiesto oppure è dichiarato diversamente."
+
+msgid "invalid_nodename_or_iounit"
+msgstr "Nome del Nodo o dell'Unità IO invalido"

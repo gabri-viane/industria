@@ -1,71 +1,53 @@
 ---Function that can be called from within ST programs with the PRINT('text') function
 ---@param text string The text to print to the chat
----@param unit Unit The unit that this code is belonging to
+---@param unit Controller The unit that this code is belonging to
 Industria.runtime.print = function(text, unit)
     if unit ~= nil then --I messaggi di print li invio
-        core.chat_send_player(unit.owner, table.concat({ "[", unit.unit_id, "]: ", text }, ""));
+        core.chat_send_player(unit.owner, table.concat({ "[", unit.controller_id, "]: ", text }, ""));
     end
 end
 
 local fnresult = Industria.commons.fnresult;
 
 ---Register an error (usually interpreter ones) to the Unit
----@param unit_code string|nil The unit code to which add the error
+---@param ctrl_code string|nil The unit code to which add the error
 ---@param message string the error message
 ---@return Result<nil>
-function Industria.runtime:registerError(unit_code, message)
+function Industria.runtime:registerError(ctrl_code, message)
     --Controllo se posso abilitare l'unità
-    if unit_code == nil then
-        return fnresult(false, "Can't register error to unit: the code is invalid.");
+    if ctrl_code == nil then
+        return fnresult(false, Industria.translate("unitcode_is_invalid"));
     end
     --Non ho ancora l'unità a runtime: non posso abilitarla sicuramente poiché non ho l'interprete
-    if self.units[unit_code] == nil then
+    if self.runtime_units[ctrl_code] == nil then
         return fnresult(true, "Unit wasn't registered to the runtime environment.");
     end
     --Se non ho ancora la lista errori allora la creo
-    if self.units[unit_code].errors == nil then
-        self.units[unit_code].errors = {};
+    if self.runtime_units[ctrl_code].errors == nil then
+        self.runtime_units[ctrl_code].errors = {};
     end
     --Rimuovo dal runtime
-    table.insert(self.units[unit_code].errors, message);
+    table.insert(self.runtime_units[ctrl_code].errors, message);
     return fnresult(true, nil, nil);
 end
 
 ---Returns the list of errors (usually interpreter ones) of the Unit
----@param unit_code string The unit code to which add the error
+---@param ctrl_code string The unit code to which add the error
 ---@return Result<string[]>
-function Industria.runtime:getErrors(unit_code)
+function Industria.runtime:getErrors(ctrl_code)
     --Controllo se posso abilitare l'unità
-    if unit_code == nil then
-        return fnresult(false, "Can't register error to unit: the code is invalid.");
+    if ctrl_code == nil then
+        return fnresult(false, Industria.translate("unitcode_is_invalid"));
     end
     --Non ho ancora l'unità a runtime: non posso abilitarla sicuramente poiché non ho l'interprete
-    if self.units[unit_code] == nil then
+    if self.runtime_units[ctrl_code] == nil then
         return fnresult(false, "Unit wasn't registered to the runtime environment.");
     end
     --Se non ho ancora la lista errori allora la creo
-    if self.units[unit_code].errors == nil then
-        self.units[unit_code].errors = {};
+    if self.runtime_units[ctrl_code].errors == nil then
+        self.runtime_units[ctrl_code].errors = {};
     end
-    return fnresult(true, nil, self.units[unit_code].errors);
-end
-
----Removes an Unit from the runtime
----@param unit Unit The unit to be removed
----@return Result<nil>
-function Industria.runtime:removeUnit(unit)
-    --Controllo se posso abilitare l'unità
-    if unit == nil or unit.unit_id == nil or unit.owner == nil then
-        return fnresult(false, "Can't remove unit: it's invalid.");
-    end
-    local unit_code = unit.unit_id .. "_" .. unit.owner;
-    --Non ho ancora l'unità a runtime: non posso abilitarla sicuramente poiché non ho l'interprete
-    if self.units[unit_code] == nil then
-        return fnresult(true, "Unit wasn't registered to the runtime environment.");
-    end
-    --Rimuovo dal runtime
-    self.units[unit_code] = nil;
-    return fnresult(true, "Unit removed from runtime environment.");
+    return fnresult(true, nil, self.runtime_units[ctrl_code].errors);
 end
 
 ---Enables a unit: the unit will be called by the runtime-handler to perform operations.
@@ -73,21 +55,24 @@ end
 ---enables the unit it is assumed that a new environment for the execution is needed
 ---(it doesn't load it from .env file).
 ---WARNING: only if the unit is present in the runtime the parameter "enabled" in the Unit will be set to true.
----@param unit Unit
+---@param controller Controller
 ---@return Result<nil> #If the unit has been enabled then "completed" will be set to "true", "false" otherwise.
-function Industria.runtime:enableUnit(unit)
+function Industria.runtime:enableController(controller)
     --Controllo se posso abilitare l'unità
-    if unit == nil or unit.enabled == nil then
+    if controller == nil or controller.enabled == nil then
         return fnresult(false, "Can't enable unit: it's invalid.");
     end
-    local unit_code = unit.unit_id .. "_" .. unit.owner;
+    local unit_code = Industria.controllers.getControllerCode(controller)
+    if not unit_code then
+        return fnresult(false, Industria.translate("unitcode_is_invalid"))
+    end
     --Non ho ancora l'unità a runtime: non posso abilitarla sicuramente poiché non ho l'interprete
-    if self.units[unit_code] == nil then
+    if self.runtime_units[unit_code] == nil then
         return fnresult(false, "Unit wasn't registered to the runtime environment.");
     end
 
-    if self.units[unit_code].interp == nil or next(self.units[unit_code].interp) == nil then
-        local res = self:createInterpreter(unit, false); --Era disabilitata l'unità: inizia da capo (nuovo env)
+    if self.runtime_units[unit_code].interp == nil or next(self.runtime_units[unit_code].interp) == nil then
+        local res = self:createInterpreter(controller, false); --Era disabilitata l'unità: inizia da capo (nuovo env)
         if not res.completed then
             self:registerError(unit_code, res.msg);
             res.data = nil;
@@ -97,62 +82,62 @@ function Industria.runtime:enableUnit(unit)
     end
 
     --Abilito dal runtime
-    self.units[unit_code].enabled = true;
+    self.runtime_units[unit_code].enabled = true;
     --Infine abilito l'unità se tutto è andato bene
-    unit.enabled = true;
+    controller.enabled = true;
 
     return fnresult(true, nil, nil);
 end
 
 ---Disables a unit: the unit will NOT be called anymore by the runtime-handler, so no operation will be performed.
 ---WARNING: even if the unit wasn't present in the runtime the parameter "enabled" in the Unit will be set to false.
----@param unit Unit
+---@param controller Controller
 ---@return Result<nil> #If the unit has been disabled then "completed" will be set to "true", "false" otherwise.
-function Industria.runtime:disableUnit(unit)
+function Industria.runtime:disableController(controller)
     --Controllo se posso abilitare l'unità
-    if unit == nil or unit.enabled == nil then
+    if controller == nil or controller.enabled == nil then
         return fnresult(false, "Can't enable unit: it's invalid.");
     end
     --Disabilito l'unità a priori
-    unit.enabled = false;
-
-    local unit_code = unit.unit_id .. "_" .. unit.owner;
+    controller.enabled = false;
+    local unit_code = Industria.controllers.getControllerCode(controller)
+    if not unit_code then
+        return fnresult(false, Industria.translate("unitcode_is_invalid"))
+    end
     --Non ho ancora l'unità a runtime: non posso abilitarla sicuramente poiché non ho l'interprete
-    if self.units[unit_code] == nil then
+    if self.runtime_units[unit_code] == nil then
         return fnresult(false, "Unit wasn't registered to the runtime environment.");
     end
     --Abilito dal runtime
-    self.units[unit_code].enabled = false;
-    if self.units[unit_code].interp ~= nil and self.units[unit_code].interp.init ~= nil then --Resetto env
-        self.units[unit_code].interp:init();
+    self.runtime_units[unit_code].enabled = false;
+    if self.runtime_units[unit_code].interp ~= nil and self.runtime_units[unit_code].interp.init ~= nil then --Resetto env
+        self.runtime_units[unit_code].interp:init();
     end
     return fnresult(true, nil, nil);
 end
 
 --- Binds an Interpreter to a Unit.
----@param unit Unit The unit to which create the interpreter
+---@param controller Controller The unit to which create the interpreter
 ---@param interpreter Interpreter The interpreter to bind to the unit
 ---@return Result<nil> #It's completed if the interpreted has been binded to the unit_code
-function Industria.runtime:setUnitInterpreter(unit, interpreter)
-    if unit == nil then
+function Industria.runtime:setControllerInterpreter(controller, interpreter)
+    if controller == nil then
         return fnresult(false, "Unit must be not nil.");
     end
-
-    if unit.unit_id == nil or unit.owner == nil then
-        return fnresult(false, "Not a unit");
+    local unit_code = Industria.controllers.getControllerCode(controller)
+    if not unit_code then
+        return fnresult(false, Industria.translate("unitcode_is_invalid"))
     end
-
-    local unit_code = unit.unit_id .. "_" .. unit.owner;
     --Non ho ancora l'unità a runtime: la salvo e gli imposto i valori di default
-    if self.units[unit_code] == nil then
-        local res = self:registerToRuntime(unit);
+    if self.runtime_units[unit_code] == nil then
+        local res = self:registerControllerToRuntime(controller);
         if not res.completed then
             self:registerError(unit_code, res.msg);
             return res;
         end
     end
     --Imposto l'interprete
-    self.units[unit_code].interp = interpreter or nil;
+    self.runtime_units[unit_code].interp = interpreter or nil;
 
     return fnresult(true, nil, nil);
 end
@@ -161,24 +146,26 @@ end
 --- building the interpreter for future usage. The interpreter is stored in
 --- Industria.runtime.units[unit_code].interp and associated with the Control Unit by the UnitCode.
 ---
----@param unit Unit {unitd_id, owner, reference_program, last_env}
+---@param controller Controller {unitd_id, owner, reference_program, last_env}
 ---@param load_init boolean if true tries to load the environment from the save file ".st.env"
 ---@return Result<Interpreter|nil> #true/false based on success or error
-function Industria.runtime:createInterpreter(unit, load_init)
+function Industria.runtime:createInterpreter(controller, load_init)
     --Check for fields
-    if unit == nil or unit.reference_program == nil then
+    if controller == nil or controller.reference_program == nil then
         return fnresult(false, "Code not loaded", nil);
     end
-
-    local unit_code = Industria.units.toUnitCode(unit.unit_id, unit.owner) or "";
+    local unit_code = Industria.controllers.getControllerCode(controller)
+    if not unit_code then
+        return fnresult(false, Industria.translate("unitcode_is_invalid"))
+    end
     --Load the ST code from the file using the reference_program parameter
-    local programcode = Industria.ST.loadCode(Industria.datapath .. "/" .. unit.reference_program);
+    local programcode = Industria.ST.loadCode(Industria.datapath .. "/" .. controller.reference_program);
     if not programcode.completed then
         self:registerError(unit_code, "Code not loaded:\n" .. programcode.msg);
         return fnresult(false, "Code not loaded:\n" .. programcode.msg, nil); --Code not loaded
     end
     --Genera l'interprete
-    local res_interpreter = Industria.ST.interpCode(programcode.data, unit_code, unit);
+    local res_interpreter = Industria.ST.interpCode(programcode.data, unit_code, controller);
     if not res_interpreter.completed then
         self:registerError(unit_code, res_interpreter.msg);
         return fnresult(false, "Interpreter not generated: " .. res_interpreter.msg, nil); --L'interprete non è stato generato
@@ -186,12 +173,12 @@ function Industria.runtime:createInterpreter(unit, load_init)
 
     -- Se ho un'interprete precedente devo controllare se ho IOUnits che puntano a variabili precedenti
     local prev_env = nil
-    if self.units[unit_code].interp then
-        prev_env = self.units[unit_code].interp:getEnv()
+    if self.runtime_units[unit_code].interp then
+        prev_env = self.runtime_units[unit_code].interp:getEnv()
     end
 
     --Imposta l'interprete associandolo alla Control Unit
-    local res = self:setUnitInterpreter(unit, res_interpreter.data);
+    local res = self:setControllerInterpreter(controller, res_interpreter.data);
     if not res.completed then
         self:registerError(unit_code, res.msg);
         return res;
@@ -200,51 +187,49 @@ function Industria.runtime:createInterpreter(unit, load_init)
 
 
     if load_init then --Se devo caricare le variabili dal salvataggio
-        local f, err = io.open(Industria.datapath .. "/" .. unit.reference_program .. ".env", "r");
+        local f, err = io.open(Industria.datapath .. "/" .. controller.reference_program .. ".env", "r");
         if err or f == nil then
             self:registerError(unit_code, err or "ST File error");
             return fnresult(false, err, nil);
         end
         --Deserializza le variabili
-        unit.last_env = core.deserialize(f:read("a"), true);
+        controller.last_env = core.deserialize(f:read("a"), true);
         f:close();
         --Imposta l'environment caricato
-        res_interpreter.data:setEnv(unit.last_env);
+        res_interpreter.data:setEnv(controller.last_env);
     end
 
     --Controllo se avevo delle IOUnits che erano precedentemente collegate e le scollego
-    Industria.runtime.iounits:checkEnvs(unit, res_interpreter.data:getEnv(), prev_env)
+    Industria.runtime.iounits:checkEnvs(controller, res_interpreter.data:getEnv(), prev_env)
 
     return fnresult(true, nil, res_interpreter.data);
 end
 
 ---Register an unit to the runtime. The Unit should be initialized then by creating
 ---the interpreter and loding the environment
----@param unit Unit
+---@param controller Controller
 ---@return Result<nil>
-function Industria.runtime:registerToRuntime(unit, justCreated)
-    if unit == nil then
+function Industria.runtime:registerControllerToRuntime(controller, justCreated)
+    if controller == nil then
         return fnresult(false, "Unit must be not nil.");
     end
-
-    if unit.unit_id == nil or unit.owner == nil then
-        return fnresult(false, "Not a unit");
+    local unit_code = Industria.controllers.getControllerCode(controller)
+    if not unit_code then
+        return fnresult(false, Industria.translate("unitcode_is_invalid"))
     end
-
-    local unit_code = unit.unit_id .. "_" .. unit.owner;
     --Non ho ancora l'unità a runtime: la salvo e gli imposto i valori di default
-    if self.units[unit_code] == nil then
-        self.units[unit_code] = {};
+    if self.runtime_units[unit_code] == nil then
+        self.runtime_units[unit_code] = {};
         --Imposto lo stato di enabled
-        self.units[unit_code].enabled = unit.enabled;
+        self.runtime_units[unit_code].enabled = controller.enabled;
         --Imposto gli errori
-        self.units[unit_code].errors = {};
+        self.runtime_units[unit_code].errors = {};
         --Imposto l'interprete
-        self.units[unit_code].interp = nil;
+        self.runtime_units[unit_code].interp = nil;
     end
 
     --if unit.enabled then
-    local res = self:createInterpreter(unit, justCreated == nil or not justCreated);
+    local res = self:createInterpreter(controller, justCreated == nil or not justCreated);
     if not res.completed then
         core.log("error", res.msg);
     end
@@ -252,25 +237,43 @@ function Industria.runtime:registerToRuntime(unit, justCreated)
     return fnresult(true, nil, nil);
 end
 
+---Removes an Unit from the runtime
+---@param controller Controller The unit to be removed
+---@return Result<nil>
+function Industria.runtime:unregisterControllerFromRuntime(controller)
+    --Controllo se posso abilitare l'unità
+    local unit_code = Industria.controllers.getControllerCode(controller)
+    if not unit_code then
+        return fnresult(false, Industria.translate("unitcode_is_invalid"))
+    end
+    --Non ho ancora l'unità a runtime: non posso abilitarla sicuramente poiché non ho l'interprete
+    if self.runtime_units[unit_code] == nil then
+        return fnresult(true, "Unit wasn't registered to the runtime environment.");
+    end
+    --Rimuovo dal runtime
+    self.runtime_units[unit_code] = nil;
+    return fnresult(true, "Unit removed from runtime environment.");
+end
+
 ---Saves all the executing environments to the unit's last_env parameter
 function Industria.runtime:saveCurrentEnv()
-    for key, value in pairs(self.units) do
+    for key, value in pairs(self.runtime_units) do
         if value ~= nil then
-            local unit = Industria.controllers.units[key];   --Prendo l'unità
-            if unit ~= nil then
-                if value.enabled and value.interp ~= {} then --se l'env si sta modificando (enabled) allora aggiorno last_env
+            local controller = Industria.controllers.registered_controllers[key]; --Prendo l'unità
+            if controller ~= nil then
+                if value.enabled and value.interp ~= {} then                      --se l'env si sta modificando (enabled) allora aggiorno last_env
                     --Se esiste salvo
-                    unit.last_env = value.interp:getEnv();
+                    controller.last_env = value.interp:getEnv();
                 end
                 --salvo last_env
-                Industria.files.saveUnitEnvironment(unit);
+                Industria.files.saveControllerEnvironment(controller);
             end
         end
     end
 end
 
 core.register_globalstep(function(dtime)
-    for key, value in pairs(Industria.runtime.units) do
+    for key, value in pairs(Industria.runtime.runtime_units) do
         if value ~= nil and value.enabled and value.interp ~= nil then
             --Imposto l'unità corrente su cui sto lavorando (in questo modo le
             --funzioni del codice ST si riferiranno a questà unità: come la chiamata
@@ -278,7 +281,7 @@ core.register_globalstep(function(dtime)
             local unit = value.interp:getUnit();
             if value.interp.cycle == nil and --Prendo l'unità
                 unit ~= nil then             --Se esiste la disabilito
-                Industria.runtime:disableUnit(unit);
+                Industria.runtime:disableController(unit);
             else
                 local th = coroutine.create(function()
                     Industria.runtime.iounits:executeCopy(value.interp, unit, 0)
@@ -286,7 +289,7 @@ core.register_globalstep(function(dtime)
                     --TODO: cur_env deve essere passato a tutte le unità in ascolto per le uscite e input
                     if not ok and        --Errore nell'esecuzione del ciclo dell'unità
                         unit ~= nil then --Se esiste la disabilito
-                        Industria.runtime:disableUnit(unit);
+                        Industria.runtime:disableController(unit);
                     else
                         Industria.runtime.iounits:executeCopy(value.interp, unit, 1)
                     end

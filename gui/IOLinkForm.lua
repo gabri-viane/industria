@@ -62,7 +62,7 @@ function Industria.formspecs.callbacks:IOLinkFormCallback(player_name, fields)
     end
 
     if fields.linkButton then
-        local resunit = Industria.units.isValidUnit(pos_unit, nil);
+        local resunit = Industria.controllers.isValidController(pos_unit, nil);
         local unit = resunit.data;
         if not resunit.completed or not unit then
             closeFS("Selected Unit is invalid");
@@ -118,7 +118,7 @@ function Industria.formspecs:showIOLinkForm(playername, pos_unit, pos_iounit)
         return;
     end
 
-    local res = Industria.units.isValidUnit(pos_unit, nil);
+    local res = Industria.controllers.isValidController(pos_unit, nil);
 
     if res.completed and res.data ~= nil then
         --Prendo il Node per prendere il mesh e la texture da usare nel formspec

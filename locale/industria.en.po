@@ -103,3 +103,6 @@ msgstr "The IOUnit has been removed"
 
 msgid "iounit_state_not_exists_or_different"
 msgstr "Industria IOUnit doesn't define the state as required"
+
+msgid "invalid_nodename_or_iounit"
+msgstr "Invilid Node name or IOUnit"

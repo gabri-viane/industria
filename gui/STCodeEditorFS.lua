@@ -32,7 +32,7 @@ function Industria.formspecs.callbacks:STEditorCallback(player_name, fields)
     end
 
     ---Controlla di chi è l'unità
-    ---@param unit Unit
+    ---@param unit Controller
     ---@return boolean #Se true allora il giocatore può gestire l'unità
     local checkOwnership = function(unit)
         if unit.protected and unit.owner ~= player_name then
@@ -48,14 +48,14 @@ function Industria.formspecs.callbacks:STEditorCallback(player_name, fields)
     end
 
     if fields.saveCode then
-        local unit = Industria.controllers:getUnit(unitcode);
+        local unit = Industria.controllers:getController(unitcode);
         --Controllo se il giocatore può accedere all'unità
         if not checkOwnership(unit.data) then
             closeFS();
             return;
         end
         --Salvo il codice
-        if Industria.files.saveUnitCode(unit.data, fields.CodeEditor) then
+        if Industria.files.saveControllerCode(unit.data, fields.CodeEditor) then
             --Chiudo il formspec
             closeFS();
         else
@@ -64,14 +64,14 @@ function Industria.formspecs.callbacks:STEditorCallback(player_name, fields)
         return;
     end
     if fields.compileCode then
-        local unit = Industria.controllers:getUnit(unitcode);
+        local unit = Industria.controllers:getController(unitcode);
         --Controllo se il giocatore può accedere all'unità
         if not checkOwnership(unit.data) then
             closeFS();
             return;
         end
         --Salvo il codice
-        if Industria.files.saveUnitCode(unit.data, fields.CodeEditor) then
+        if Industria.files.saveControllerCode(unit.data, fields.CodeEditor) then
             --Compilo
             Industria.runtime:createInterpreter(unit.data, false);
             --Chiudo il formspec
@@ -93,9 +93,9 @@ end
 
 --- Displays the Code Editor Formspec to the player if the player can edit or view the Unit.
 ---@param player_name owner Name of the user to show the formspec to.
----@param unit_code unit_code The UnitCode
+---@param unit_code ControllerCODE The UnitCode
 function Industria.formspecs:showEditor(player_name, unit_code)
-    local res = Industria.controllers:getUnit(unit_code);
+    local res = Industria.controllers:getController(unit_code);
 
     if res.completed then
         --Controllo se il giocatore può accedere all'unità
@@ -106,7 +106,7 @@ function Industria.formspecs:showEditor(player_name, unit_code)
         local code = Industria.ST.loadCode(Industria.datapath .. "/" .. res.data.reference_program);
         if not code.completed then
             --non ho trovato il codice/file: lo devo creare
-            if not Industria.files.saveUnitCode(res.data, "") then
+            if not Industria.files.saveControllerCode(res.data, "") then
                 return; -- Se non sono riuscito a crearlo esco
             end
             --riprovo ad aprirlo:

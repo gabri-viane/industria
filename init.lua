@@ -20,7 +20,7 @@ end
 
 core.register_chatcommand("industria_units", {
     func = function(name, param)
-        core.chat_send_all(core.serialize(Industria.controllers.units));
+        core.chat_send_all(core.serialize(Industria.controllers.registered_controllers));
     end
 });
 

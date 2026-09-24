@@ -586,7 +586,7 @@ local MAX_STEPS = 1000000
 
 --- Genera un nuovo interprete dato l'AST
 --- @param ast any
---- @param unit Unit
+--- @param unit Controller
 --- @return Interpreter
 local function new_interpreter(ast, unit)
     -- Ambiente di esecuzione: mappa nome variabile → { value, dtype }.
@@ -1036,7 +1036,7 @@ local function new_interpreter(ast, unit)
     end
 
     ---Restituisce l'unità associata
-    ---@return Unit
+    ---@return Controller
     function interp:getUnit()
         return unit;
     end
@@ -1047,7 +1047,7 @@ end
 ---Genera l'interprete dato il testo del file ST. Il file deve contenere sia le dichiarazioni di variabili sia il codice.
 ---@param code_source string Testo contentenuto nel file .ST associato ad una unit
 ---@param unit_code string Il codice dell'unità, per gli errori
----@param unit Unit Unità, in questo modo l'interprete sa a che unità referenziarsi
+---@param unit Controller Unità, in questo modo l'interprete sa a che unità referenziarsi
 ---@return Result<Interpreter|nil> #Restituisce l'interprete se viene completato correttamente, altrimenti nil
 Industria.ST.interpCode = function(code_source, unit_code, unit)
     local rterror = function(message)

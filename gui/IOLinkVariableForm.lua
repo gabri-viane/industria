@@ -6,7 +6,7 @@ local coreShowFormSpec = core.show_formspec;
 local sendPlayerMsg = core.chat_send_player;
 
 ---Generate the states and variables lists
----@param unit Unit
+---@param unit Controller
 ---@param iounit IOUnit
 local generateDataLists = function(unit, iounit)
     local node_name = Industria.iounits.getIOUnitNodeName(iounit);
@@ -17,13 +17,13 @@ local generateDataLists = function(unit, iounit)
     if not states.completed then
         return Industria.formspecs.errorFormspec("IOUnit doesn't contain any state");
     end
-    local unit_code = Industria.units.getUnitCode(unit);
+    local unit_code = Industria.controllers.getControllerCode(unit);
     if not unit_code then
         return Industria.formspecs.errorFormspec("Can't find Unit");
     end
 
     local variables = {}
-    local unit_rt = Industria.runtime.units[unit_code]
+    local unit_rt = Industria.runtime.runtime_units[unit_code]
     local env = nil
 
     if not unit_rt or not unit_rt.interp then
@@ -111,7 +111,7 @@ function Industria.formspecs.callbacks:IOLinkVariableFormCallback(player_name, f
             Industria.formspecs:showIOLinkVariableForm(player_name, unit, iounit, "Select an Unit's variable before link");
             return;
         end
-        local result_state = Industria.iounits.getStateData(playerdata.ionode_name, playerdata.selected_state)
+        local result_state = Industria.iounits.getIOUnitState(iounit, playerdata.selected_state)
         if not result_state.completed then
             Industria.formspecs:showIOLinkVariableForm(player_name, unit, iounit, result_state.msg);
             return;
@@ -151,7 +151,7 @@ end
 --- only if the unit is not protected: if it's protected than the formspec is showed
 --- only to the owner.
 ---@param playername string Name of the player to show to unit to
----@param unit Unit
+---@param unit Controller
 ---@param iounit IOUnit
 ---@param error string|nil
 function Industria.formspecs:showIOLinkVariableForm(playername, unit, iounit, error)
