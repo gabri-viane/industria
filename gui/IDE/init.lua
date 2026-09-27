@@ -7,13 +7,13 @@ Industria.formspecs.IDE = {
     FSKeyCode = "Industria:Controller:IDE",
 }
 
----@alias IDEData {ctrl_code:ControllerCODE, code: string, variables: Environment, errors: string[] }
+
 
 ---Restituisce i dati dell'IDE
 ---@param playername string Nome del giocatore
 ---@return Result<IDEData|nil> #Dati dell'IDE oppure nil se non è possibile recuperarli
 function Industria.formspecs.IDE:getIDEData(playername)
-    local res =  Industria.formspecs:getPlayerStatus(playername);
+    local res = Industria.formspecs:getPlayerStatus(playername);
     if res.showing ~= self.FSKeyCode then
         return fnresult(false, "Player is not currently in IDE Formspec")
     end
@@ -23,8 +23,8 @@ function Industria.formspecs.IDE:getIDEData(playername)
     if not data.variables then
         data.variables = {}
     end
-    if not data.errors then
-        data.errors = {}
+    if not data.output then
+        data.output = {}
     end
     return fnresult(true, nil, data)
 end
@@ -36,8 +36,8 @@ function Industria.formspecs.IDE:updateIDEData(playername, data)
     if not data.variables then
         data.variables = {}
     end
-    if not data.errors then
-        data.errors = {}
+    if not data.output then
+        data.output = {}
     end
     Industria.formspecs:setPlayerStatus(playername, self.FSKeyCode, data)
 end
@@ -55,13 +55,15 @@ function Industria.formspecs.IDE:refresh(playername)
             end);
         self:coreShowFormSpec(playername, self.forms.MainIDE(data_res.data));
     else
-        sendPlayerMsg(playername,"No IDE data")
+        sendPlayerMsg(playername, "No IDE data")
     end
 end
 
 dofile(Industria.path .. "/gui/IDE/forms.lua");
 dofile(Industria.path .. "/gui/IDE/IDEMain.lua");
 dofile(Industria.path .. "/gui/IDE/IDEVariableForm.lua");
+dofile(Industria.path .. "/gui/IDE/IDEOutputForm.lua");
+dofile(Industria.path .. "/gui/IDE/IDECodeForm.lua");
 
 ---Chiude il form al giocatore.
 ---@param playername string Giocatore a cui chiudere il formspec

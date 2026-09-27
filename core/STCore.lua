@@ -546,7 +546,7 @@ local function new_parser(tokens)
 
     -- Punto d'ingresso del parser: analizza l'intero programma ST.
     -- Restituisce un nodo "Program" che è la radice dell'AST.
-    function p:parse()
+    function p:parseFullCode()
         expect("PROGRAM")
         local name = expect("IDENT")
         local var_decls, stmts = {}, {}
@@ -562,6 +562,17 @@ local function new_parser(tokens)
         end
         expect("END_PROGRAM")
         return node("Program", { name = name.value, var_decls = var_decls, stmts = stmts })
+    end
+
+    -- Punto d'ingresso semplice del parser: analizza il programma ST senza HEADER (PROGRAM Nome), senza Variabili (VAR ... END_VAR).
+    -- Restituisce un nodo "Program" che è la radice dell'AST.
+    function p:parseCode()
+        local stmts = {}
+        -- Il corpo del programma alterna blocchi VAR e istruzioni
+        while not check("EOF") do
+            table.insert(stmts, parse_stmt())
+        end
+        return node("Code", { name = nil, var_decls = {}, stmts = stmts })
     end
 
     return p
@@ -582,7 +593,7 @@ end
 
 -- Soglia massima di istruzioni eseguibili in un singolo programma.
 -- Protegge contro loop infiniti senza dipendere da os.clock().
-local MAX_STEPS = 1000000
+local MAX_STEPS = 10000
 
 --- Genera un nuovo interprete dato l'AST
 --- @param ast any
@@ -722,6 +733,7 @@ local function new_interpreter(ast, unit)
             local entry = env[n.name]
             if entry == nil then
                 runtime_error("Variable not initialized: '" .. n.name .. "'")
+                return;
             end
             return entry.value
         elseif n.kind == "Group" then
@@ -867,6 +879,10 @@ local function new_interpreter(ast, unit)
             if by_v == 0 then runtime_error("FOR: increment (BY) can't be 0") end
             local entry = env[n.var]
             if not entry then runtime_error("Cycle's variable not defined: '" .. n.var .. "'") end
+            if not from_v or not to_v or type(from_v) ~= "number" or type(to_v) ~= "number" then
+                runtime_error("FOR: FROM and TO values can't be nil")
+                return nil
+            end
             local i = math.floor(from_v)
             local limit = math.floor(to_v)
             -- La condizione di terminazione dipende dal segno di BY:
@@ -1045,11 +1061,12 @@ local function new_interpreter(ast, unit)
 end
 
 ---Genera l'interprete dato il testo del file ST. Il file deve contenere sia le dichiarazioni di variabili sia il codice.
----@param code_source string Testo contentenuto nel file .ST associato ad una unit
+---@param code_source IDEData Dati contentenuti nel file associato ad un controllore
 ---@param unit_code string Il codice dell'unità, per gli errori
 ---@param unit Controller Unità, in questo modo l'interprete sa a che unità referenziarsi
+---@param lightload boolean Gestisce il controllo "leggero": avendo dichiarato le variabili non nel codice ma come dati nella tabella IDEData, evito di cercarle nel codice e faccio l'AST solo del codice effettivo (no variabili, no Header, ...).
 ---@return Result<Interpreter|nil> #Restituisce l'interprete se viene completato correttamente, altrimenti nil
-Industria.ST.interpCode = function(code_source, unit_code, unit)
+Industria.ST.interpCode = function(code_source, unit_code, unit, lightload)
     local rterror = function(message)
         Industria.runtime:registerError(unit_code, message);
     end
@@ -1066,7 +1083,7 @@ Industria.ST.interpCode = function(code_source, unit_code, unit)
 
     -- ── Fase 2: Parsing → AST ────────────────────────────────
     local parser = new_parser(tokens)
-    local ok2, res2 = pcall(function() return parser:parse() end)
+    local ok2, res2 = pcall(function() if lightload then return parser:parseCode() else return parser:parseFullCode() end end)
     if not ok2 then
         local msg = "(SYNTACTIC) " .. tostring(res2.msg) .. "\n";
         rterror(msg);
@@ -1080,22 +1097,13 @@ Industria.ST.interpCode = function(code_source, unit_code, unit)
     -- dichiarati nel blocco VAR. Questa fase non esegue il programma.
 
     local interp = new_interpreter(ast, unit);
+    if lightload then -- Non ho interpretato le variabili, le imposto da qua
+        interp:setEnv(code_source.variables);
+    end
 
     --[[
         local env_res = interp:init(ast) -- alloca env; NON esegue il corpo del PROGRAM
         local ok3, err3, cur_env, stats = interp:cycle()
     ]]
     return fnresult(true, nil, interp);
-end
-
----Loads code from an ST file
----@param filename string The path to the file
----@return Result<string|nil>
-Industria.ST.loadCode = function(filename)
-    local f, err = io.open(filename, "r")
-    if not f then
-        return fnresult(false, "File not opened: " .. tostring(err) .. "\n", nil);
-    end
-    local source = f:read("*a"); f:close();
-    return fnresult(true, nil, source);
 end

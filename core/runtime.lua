@@ -159,13 +159,13 @@ function Industria.runtime:createInterpreter(controller, load_init)
         return fnresult(false, Industria.translate("unitcode_is_invalid"))
     end
     --Load the ST code from the file using the reference_program parameter
-    local programcode = Industria.ST.loadCode(Industria.datapath .. "/" .. controller.reference_program);
+    local programcode = Industria.files.getControllerCode(controller) --Industria.ST.loadCode(Industria.datapath .. "/" .. controller.reference_program);
     if not programcode.completed then
         self:registerError(unit_code, "Code not loaded:\n" .. programcode.msg);
         return fnresult(false, "Code not loaded:\n" .. programcode.msg, nil); --Code not loaded
     end
     --Genera l'interprete
-    local res_interpreter = Industria.ST.interpCode(programcode.data, unit_code, controller);
+    local res_interpreter = Industria.ST.interpCode(programcode.data, unit_code, controller, true);
     if not res_interpreter.completed then
         self:registerError(unit_code, res_interpreter.msg);
         return fnresult(false, "Interpreter not generated: " .. res_interpreter.msg, nil); --L'interprete non è stato generato

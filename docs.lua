@@ -28,3 +28,5 @@
 ---@alias IOUnit {iounit_name: IOUnitName, iounit_code : IOUnitCODE, owner : owner, reference_controller : ControllerCODE | nil, pos_block: any, io_ports: table<IOPropertyName,IOPort>, linked_properties: table<varname,IOPropertyName>} Unità/Controllore
 
 ---@alias RTInfo {enabled:boolean,interp: Interpreter|nil,errors:string[]}
+
+---@alias IDEData {ctrl_code:ControllerCODE, programname:string, code: string, variables: Environment, output: string[] }

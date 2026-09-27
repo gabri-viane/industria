@@ -50,7 +50,7 @@ function Industria.formspecs.callbacks:ControllerIDInputCallback(player_name, fi
         --Unità creata
         if res.completed then
             --Salvo il codice (il file con template di un programma)
-            if Industria.files.saveControllerCode(res.data, Industria.files.STtemplate) then
+            if Industria.files.saveControllerCode(res.data, nil) then --Industria.files.STtemplate
                 --Chiudo il formspec
                 coreCloseFormSpec(player_name, FSKeyCode);
                 Industria.formspecs:setPlayerStatus(player_name, nil, nil);

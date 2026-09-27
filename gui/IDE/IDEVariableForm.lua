@@ -3,8 +3,8 @@ function Industria.formspecs.IDE.callbacks:VariableFormCallback(player_name, fie
         ---@type Environment
         playerdata.variables = {}
     end
-    if not playerdata.errors then
-        playerdata.errors = {}
+    if not playerdata.output then
+        playerdata.output = {}
     end
 
     if fields.addbtn then
@@ -21,14 +21,14 @@ function Industria.formspecs.IDE.callbacks:VariableFormCallback(player_name, fie
                     default = tonumber(fields.vardefault)
                     if not default then
                         --Se non lo è aggiungo un errore
-                        table.insert(playerdata.errors,
+                        table.insert(playerdata.output,
                             "[ERR] Invalid Default Value for '" .. fields.varname .. "': not a number")
                     elseif fields.vartype == "INT" then
                         --Se è la definizione di un numero interno allora provo a convertirlo
                         default = math.floor(default)
                         if not default then
                             --Se non riesco do errore
-                            table.insert(playerdata.errors,
+                            table.insert(playerdata.output,
                                 "[ERR] Invalid Default Value for '" .. fields.varname .. "': can't convert to int")
                         end
                     end
@@ -58,10 +58,9 @@ function Industria.formspecs.IDE.callbacks:VariableFormCallback(player_name, fie
                 }
             end
         else
-            table.insert(playerdata.errors, "[ERR] Invalid Variable Name")
+            table.insert(playerdata.output, "[ERR] Invalid Variable Name")
         end
 
         Industria.formspecs.IDE:updateIDEData(player_name, playerdata);
-        return;
     end
 end

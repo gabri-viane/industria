@@ -35,11 +35,14 @@ function Industria.formspecs.IDE.callbacks:STMainIDECallback(player_name, fields
 
     --Chiamo tutti i callback dell'IDE
     Industria.formspecs.IDE.callbacks:VariableFormCallback(player_name, fields, playerdata);
+    Industria.formspecs.IDE.callbacks:OutputFormCallback(player_name, fields, playerdata);
+    Industria.formspecs.IDE.callbacks:CodeFormCallback(player_name, fields, playerdata);
 
     --Aggiorno il formspec
     Industria.formspecs.IDE:refresh(player_name);
 
     if fields.quit then
+        Industria.files.saveControllerCode(res.data, playerdata);
         Industria.formspecs.IDE:coreCloseFormSpec(player_name)
     end
 end
@@ -61,20 +64,20 @@ function Industria.formspecs.IDE:showIDE(player_name, unit_code)
         --Controllo se il giocatore stava già mostrando il Formspec dell'IDE, in tal caso non ricarico tutto il programma da zero
         if not ref:getPlayerStatus(player_name).showing
             or not (ref:getPlayerStatus(player_name).showing == self.FSKeyCode) then
-            local code = Industria.ST.loadCode(Industria.datapath .. "/" .. res.data.reference_program);
+            local code = Industria.files.getControllerCode(res.data) --Industria.ST.loadCode(Industria.datapath .. "/" .. res.data.reference_program);
             if not code.completed then
                 --non ho trovato il codice/file: lo devo creare
-                if not Industria.files.saveControllerCode(res.data, "") then
+                if not Industria.files.saveControllerCode(res.data, nil) then
                     return; -- Se non sono riuscito a crearlo esco
                 end
                 --riprovo ad aprirlo:
-                code = Industria.ST.loadCode(Industria.datapath .. "/" .. res.data.reference_program);
+                code = Industria.files.getControllerCode(res.data) --Industria.ST.loadCode(Industria.datapath .. "/" .. res.data.reference_program);
                 -- Se non sono riuscito di nuovo ad aprirlo
                 if not code.completed then
                     return;
                 end
             end
-            self:updateIDEData(player_name, { ctrl_code = unit_code, code = code.data });
+            self:updateIDEData(player_name, code.data);
         end
         self:refresh(player_name);
     else
