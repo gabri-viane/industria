@@ -30,6 +30,19 @@ Industria.commons = {
         -- Remove leading/trailing whitespace and check length
         return str:match("^%s*$") ~= nil
     end,
+    ---Checks if string is valid string to be used as variable
+    ---@param str string?
+    ---@return boolean #Returns true only if is valid
+    isValidVarname = function(str)
+        if not str then
+            return false
+        end
+        if Industria.commons.isBlank(str) then
+            return false;
+        end
+
+        return string.match(str, "^[%a_][%w_]*$") ~= nil
+    end,
     ---Trims a string
     ---@param str string
     ---@return string
@@ -39,13 +52,13 @@ Industria.commons = {
             error("trim_trailing_spaces: expected a string, got " .. type(str))
         end
         -- Remove trailing spaces using pattern matching
-        local res, count =  str:gsub("%s+$", "");
+        local res, count = str:gsub("%s+$", "");
         return res;
     end,
     ---Generates a random string
     ---@param size number Size of the string to be generated
     ---@return string #The random string generated
-    rndstr = function (size)
+    rndstr = function(size)
         local rnd_str = {};
         for i = 1, size, 1 do
             rnd_str[i] = string.char(math.random(32, 126))

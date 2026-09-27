@@ -9,9 +9,24 @@ local sendPlayerMsg = core.chat_send_player;
 ---@param text string #The content to display in the editor
 ---@return string #The formspec editor
 local STCodeEditor = function(text)
+    local max_lines_in_height = 24
+    local textarea_height = 8.7
+    local line_height = textarea_height / max_lines_in_height
+
+    local _, linecount = text:gsub('\n', '\n')
+    linecount = math.min(linecount, max_lines_in_height)
+
+    local labels = {}
+    local y_cur_pos = 1.2
+    for i = 1, linecount, 1 do
+        table.insert(labels, "label[0.1," .. y_cur_pos .. ";" .. i .. "]")
+        y_cur_pos = y_cur_pos + line_height
+    end
+
     return table.concat({ "formspec_version[6]",
-        "size[10.5,11]",
-        "textarea[0.1,1;10.3,9;CodeEditor;Program Code:;", core.formspec_escape(text), "]",
+        "size[12,11]",
+        "style_type[textarea;font=mono]",
+        "textarea[1,1;10.3,8.7;CodeEditor;Program Code:;", core.formspec_escape(text), "]",
         "button[7.4,10.1;3,0.8;saveCode;Save]",
         "button[4.2,10.1;3,0.8;cancelEdits;Undo]",
         "button_exit[8.9,0;1.6,0.8;exitForm;Exit]",
@@ -30,6 +45,8 @@ function Industria.formspecs.callbacks:STEditorCallback(player_name, fields)
             Industria.formspecs:setPlayerStatusFallback(player_name, nil); --Consuma il callback
         end
     end
+
+    sendPlayerMsg(player_name,core.serialize(fields))
 
     ---Controlla di chi è l'unità
     ---@param unit Controller

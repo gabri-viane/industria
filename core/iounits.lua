@@ -62,10 +62,6 @@ function Industria.iounits.getIOUnitCode(pos)
     return "x" .. pos.x .. "y" .. pos.y .. "z" .. pos.z
 end
 
--------------------------------------------------------------------------
----                     GESTIONE IOUNITS REGISTRATE                   ---
--------------------------------------------------------------------------
-
 ---Prende, se esiste, il valore salvato nel nodo "iounit_name" contenuto in "industria_props". Controlla
 ---che esista il nodo, che il nodo abbia la proprietà "industria_props" e che faccia parte del gruppo "industria_iounit".
 ---Se queste valutazioni danno esito positivo allora viene controllato che esista "iounit_name" all'interno di "industria_props".
@@ -88,6 +84,11 @@ local function getIOUnitName(node_name)
     end
     return fnresult(true, nil, data.iounit_name);
 end
+
+-------------------------------------------------------------------------
+---                     GESTIONE IOUNITS REGISTRATE                   ---
+-------------------------------------------------------------------------
+
 
 ---Find the state of the IOUnit linked to a certain variable of the environment of the Unit
 ---@param iounit IOUnit

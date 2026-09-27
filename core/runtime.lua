@@ -1,9 +1,9 @@
 ---Function that can be called from within ST programs with the PRINT('text') function
 ---@param text string The text to print to the chat
----@param unit Controller The unit that this code is belonging to
+---@param unit Controller|IOUnit The unit that is sending the message to the owner
 Industria.runtime.print = function(text, unit)
     if unit ~= nil then --I messaggi di print li invio
-        core.chat_send_player(unit.owner, table.concat({ "[", unit.controller_id, "]: ", text }, ""));
+        core.chat_send_player(unit.owner, table.concat({ "[", unit.controller_id or unit.iounit_name, "]: ", text }, ""));
     end
 end
 
@@ -228,12 +228,12 @@ function Industria.runtime:registerControllerToRuntime(controller, justCreated)
         self.runtime_units[unit_code].interp = nil;
     end
 
-    --if unit.enabled then
-    local res = self:createInterpreter(controller, justCreated == nil or not justCreated);
-    if not res.completed then
-        core.log("error", res.msg);
+    if controller.enabled then
+        local res = self:createInterpreter(controller, justCreated == nil or not justCreated);
+        if not res.completed then
+            core.log("error", res.msg);
+        end
     end
-    --end
     return fnresult(true, nil, nil);
 end
 

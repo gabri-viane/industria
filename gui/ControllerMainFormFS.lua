@@ -44,7 +44,7 @@ local ControllerMainForm = function(controller, playername)
         "label[0.3,0.5;Owner:]",
         "label[1.6,0.5;", controller.owner or "unknown", "]",
         "label[0.3,1.1;Controller ID:]",
-        "label[1.6,1.1;", controller.controller_id or "unknown", "]",
+        "label[2.2,1.1;", controller.controller_id or "unknown", "]",
         "box[7.1,1.7;0.5,0.5;", color, "]",
         "label[3.4,1.9;Current status: ", strstatus, "]",
         "button[0.2,1.5;3,0.8;enableToggleButton;", straction, "]",
@@ -121,7 +121,9 @@ function Industria.formspecs.callbacks:ControllerMainFormCallback(player_name, f
     if fields.editCodeController then
         --Chiudo il formspec e apro quello di editing
         coreCloseFormSpec(player_name, FSKeyCode);
-        Industria.formspecs:showEditor(player_name, cntrl_code);
+        --Industria.formspecs:showEditor(player_name, cntrl_code);
+        --Industria.formspecs:showCodeIDE(player_name, cntrl_code);
+        Industria.formspecs.IDE:IDE(player_name, cntrl_code);
         Industria.formspecs:setPlayerStatusFallback(player_name, function()
             --Una volta chiuso l'editor torna alla pagina principale
             Industria.formspecs:showControllerMainForm(player_name, cntrl_code);

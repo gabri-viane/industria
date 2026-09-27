@@ -84,7 +84,9 @@ core.register_on_player_receive_fields(function(player, formname, fields)
 end)
 
 
-dofile(Industria.path .. "/gui/STCodeEditorFS.lua");
+--dofile(Industria.path .. "/gui/STCodeEditorFS.lua");
+--dofile(Industria.path .. "/gui/STIDE.lua");
+dofile(Industria.path .. "/gui/IDE/init.lua");
 dofile(Industria.path .. "/gui/ControllerIDInputFS.lua");
 dofile(Industria.path .. "/gui/ControllerMainFormFS.lua");
 dofile(Industria.path .. "/gui/IOLinkVariableForm.lua");
