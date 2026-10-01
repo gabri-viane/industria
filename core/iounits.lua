@@ -180,7 +180,7 @@ function Industria.iounits.getAvailableStates(node)
 
     -- Prendo tutti gli stati possibili per questo blocco
     local states = {}
-    for key, _ in pairs(Industria.runtime.iounits.definitions[result.data]) do
+    for key, _ in pairs(result.data) do
         table.insert(states, key)
     end
     return fnresult(true, nil, states);

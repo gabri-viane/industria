@@ -13,7 +13,7 @@ local generateDataLists = function(unit, iounit)
     if not node_name then
         return Industria.formspecs.errorFormspec("Invalid Node");
     end
-    local states = Industria.iounits.getAvailableStates(node_name);
+    local states = Industria.iounits.getAvailableStates(iounit);
     if not states.completed then
         return Industria.formspecs.errorFormspec("IOUnit doesn't contain any state");
     end

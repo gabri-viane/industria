@@ -173,12 +173,12 @@ function Industria.runtime.iounits:link(unit, iounit, iounitStateName, envVarNam
 
     --Imposto per la variabile dell'IOUnit la variabile della Unit collegata
     iounit.io_ports[iounitStateName].linked_var = envVarName;
-    iounit.io_ports[iounitStateName].iotype       = type;
+    iounit.io_ports[iounitStateName].iotype     = type;
     --Nella iounit segno che per una determinata variabile è collegata quale porta di IO
-    iounit.linked_properties[envVarName]            = iounitStateName
+    iounit.linked_properties[envVarName]        = iounitStateName
     --Registro nell'unità che la variabile è stata collegata
-    unit.linked_iounits[envVarName]                   = iounit.iounit_code;
-    iounit.reference_controller                       = ctrl_code
+    unit.linked_iounits[envVarName]             = iounit.iounit_code;
+    iounit.reference_controller                 = ctrl_code
 
     return fnresult(true, nil, iounit)
 end
@@ -277,9 +277,10 @@ function Industria.runtime.iounits:executeCopy(interp, unit, direction)
         res = Industria.iounits:getIOUnit(iounit_code)
         iounit = res.data
         if res.completed and iounit then
-            states = Industria.iounits.getIOUnitStates(iounit)
+            res = Industria.iounits.getIOUnitStates(iounit)
             state_name = iounit.linked_properties[varname]
-            if states and state_name and states[state_name] then
+            states = res.data
+            if res.completed and state_name and states and states[state_name] then
                 if (direction == 0 and states[state_name].iotype == 0) then
                     if env[varname].dtype == states[state_name].dtype then
                         if type(states[state_name].value) == "function" then
