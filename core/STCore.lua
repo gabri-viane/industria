@@ -182,8 +182,15 @@ local function new_lexer(source)
                 if KEYWORDS[upper] then
                     -- È una keyword: usa il tipo specifico e il valore canonico.
                     -- TRUE/FALSE ottengono il valore Lua boolean direttamente.
-                    local tt  = KW_TO_TT[upper] or upper
-                    local val = (upper == "TRUE") and true or (upper == "FALSE") and false or word
+                    local tt = KW_TO_TT[upper] or upper
+                    local val;
+                    if upper == "TRUE" then
+                        val = true
+                    elseif upper == "FALSE" then
+                        val = false
+                    else
+                        val = word
+                    end
                     table.insert(self.tokens, tok(tt, val))
                 else
                     -- Identificatore utente: mantiene la scrittura originale
@@ -566,13 +573,13 @@ local function new_parser(tokens)
 
     -- Punto d'ingresso semplice del parser: analizza il programma ST senza HEADER (PROGRAM Nome), senza Variabili (VAR ... END_VAR).
     -- Restituisce un nodo "Program" che è la radice dell'AST.
-    function p:parseCode()
+    function p:parseCode(programname, vars)
         local stmts = {}
         -- Il corpo del programma alterna blocchi VAR e istruzioni
         while not check("EOF") do
             table.insert(stmts, parse_stmt())
         end
-        return node("Code", { name = nil, var_decls = {}, stmts = stmts })
+        return node("Program", { name = programname, var_decls = vars, stmts = stmts })
     end
 
     return p
@@ -599,7 +606,7 @@ local MAX_STEPS = 10000
 --- @param ast any
 --- @param unit Controller
 --- @return Interpreter
-local function new_interpreter(ast, unit)
+local function new_interpreter(ast, unit, lightload)
     -- Ambiente di esecuzione: mappa nome variabile → { value, dtype }.
     -- Viene popolato da interp:run() prima di eseguire il corpo.
     ---@type Environment
@@ -926,6 +933,8 @@ local function new_interpreter(ast, unit)
 
     ---@class Interpreter
     local interp = {
+        --- Se l'interprete è creato come light allora le variabili non sono definite nel codice ma in "_ast"
+        lightload = lightload,
         _ast = ast,
         cycle_count = 0,
         steps_cycle = 0,
@@ -941,43 +950,50 @@ local function new_interpreter(ast, unit)
 
     -- ── interp:init(ast_in) ──────────────────────────────────
 
-    -- Fase di POWER-ON / inizializzazione.
-    -- Va chiamata UNA SOLA VOLTA prima del loop di scan.
-    --
-    -- Percorre tutte le dichiarazioni VAR dell'AST e popola `env`
-    -- con il valore iniziale di ogni variabile:
-    --   - se la dichiarazione ha un inizializzatore (:= expr), lo valuta
-    --   - altrimenti usa il valore di default per il tipo (0, 0.0, FALSE, "")
-    -- Dopo init() l'env è pronto e le variabili mantengono i loro valori
-    -- tra un ciclo e l'altro (memoria persistente del PLC).
+    --- Fase di POWER-ON / inizializzazione.
+    --- Va chiamata UNA SOLA VOLTA prima del loop di scan.
+    ---
+    --- Percorre tutte le dichiarazioni VAR dell'AST e popola `env`
+    --- con il valore iniziale di ogni variabile:
+    ---   - se la dichiarazione ha un inizializzatore (:= expr), lo valuta
+    ---   - altrimenti usa il valore di default per il tipo (0, 0.0, FALSE, "")
+    --- Dopo init() l'env è pronto e le variabili mantengono i loro valori
+    --- tra un ciclo e l'altro (memoria persistente del PLC).
+    ---@param ast_in Environment | any
+    ---@return Environment
     function interp:init(ast_in)
         if ast_in ~= nil then
             self._ast = ast_in -- memorizza l'AST per i cicli futuri
         else
             ast_in = self._ast;
         end
-
-        for _, d in ipairs(ast_in.var_decls) do
-            local init_val
-            if d.init then
-                -- Valuta l'espressione inizializzatrice (es. := 42 oppure := TRUE)
-                init_val = eval(d.init)
-                -- Coercizione al tipo dichiarato: garantisce che una costante
-                -- come 3.0 finisca come INT=3 se il tipo è INT.
-                if d.dtype == "INT" and type(init_val) == "number" then
-                    init_val = math.floor(init_val)
-                elseif d.dtype == "REAL" and type(init_val) == "number" then
-                    init_val = init_val + 0.0
-                elseif d.dtype == "BOOL" then
-                    init_val = truthy(init_val)
-                elseif d.dtype == "STRING" then
-                    init_val = tostring(init_val)
-                end
-            else
-                -- Nessun inizializzatore: usa il valore di default del tipo
-                init_val = default_value(d.dtype)
+        if self.lightload then
+            for key, value in pairs(ast_in.var_decls) do
+                env[key] = { dtype = value.dtype, value = value.value }
             end
-            env[d.name] = { value = init_val, dtype = d.dtype }
+        else
+            for _, d in ipairs(ast_in.var_decls) do
+                local init_val
+                if d.init then
+                    -- Valuta l'espressione inizializzatrice (es. := 42 oppure := TRUE)
+                    init_val = eval(d.init)
+                    -- Coercizione al tipo dichiarato: garantisce che una costante
+                    -- come 3.0 finisca come INT=3 se il tipo è INT.
+                    if d.dtype == "INT" and type(init_val) == "number" then
+                        init_val = math.floor(init_val)
+                    elseif d.dtype == "REAL" and type(init_val) == "number" then
+                        init_val = init_val + 0.0
+                    elseif d.dtype == "BOOL" then
+                        init_val = truthy(init_val)
+                    elseif d.dtype == "STRING" then
+                        init_val = tostring(init_val)
+                    end
+                else
+                    -- Nessun inizializzatore: usa il valore di default del tipo
+                    init_val = default_value(d.dtype)
+                end
+                env[d.name] = { value = init_val, dtype = d.dtype }
+            end
         end
         return env;
     end
@@ -1003,7 +1019,6 @@ local function new_interpreter(ast, unit)
         -- la protezione MAX_STEPS; lo resettiamo per misurare la durata
         -- di ogni singolo ciclo indipendentemente dagli altri.
         steps = 0
-
         self.cycle_count = self.cycle_count + 1
 
         -- Esecuzione protetta: pcall cattura errori runtime senza
@@ -1033,12 +1048,14 @@ local function new_interpreter(ast, unit)
     ---@param newEnv Environment|nil il nuovo ambiente da impostare (se nil usa quello interno)
     function interp:setEnv(newEnv)
         if newEnv ~= nil then
-            if env == nil or env == {} then
-                env = newEnv;
+            if env == nil or #env == 0 then
+                for k, val in pairs(newEnv) do
+                    env[k] = { dtype = val.dtype, value = val.value };
+                end
             else
                 for k, val in pairs(env) do
                     if newEnv[k] ~= nil then
-                        env[k] = newEnv[k];
+                        env[k] = { dtype = newEnv[k].dtype, value = newEnv[k].value };
                     end
                 end
             end
@@ -1072,31 +1089,35 @@ Industria.ST.interpCode = function(code_source, unit_code, unit, lightload)
     end
 
     -- ── Fase 1: Tokenizzazione ───────────────────────────────
-    local lexer = new_lexer(code_source)
-    local ok, res = pcall(function() return lexer:tokenize() end)
+    local lexer = new_lexer(code_source.code)
+    local ok, tokens_res = pcall(function() return lexer:tokenize() end)
     if not ok then
-        local msg = "(LESSICAL) " .. tostring(res.msg) .. "\n";
+        local msg = "(LESSICAL) " .. tostring(tokens_res.msg) .. "\n";
         rterror(msg);
         return fnresult(false, msg, nil);
     end
-    local tokens = res
 
     -- ── Fase 2: Parsing → AST ────────────────────────────────
-    local parser = new_parser(tokens)
-    local ok2, res2 = pcall(function() if lightload then return parser:parseCode() else return parser:parseFullCode() end end)
+    local parser = new_parser(tokens_res)
+    local ok2, ast_res = pcall(function()
+        if lightload then
+            return parser:parseCode(code_source.programname, code_source.variables)
+        else
+            return parser:parseFullCode()
+        end
+    end)
     if not ok2 then
-        local msg = "(SYNTACTIC) " .. tostring(res2.msg) .. "\n";
+        local msg = "(SYNTACTIC) " .. tostring(ast_res.msg) .. "\n";
         rterror(msg);
         return fnresult(false, msg, nil);
     end
-    local ast = res2
 
     -- ── Fase 3: POWER-ON – inizializzazione variabili ────────
     -- Corrisponde alla fase di "cold start" del PLC:
     -- le variabili vengono allocate e impostate ai valori iniziali
     -- dichiarati nel blocco VAR. Questa fase non esegue il programma.
 
-    local interp = new_interpreter(ast, unit);
+    local interp = new_interpreter(ast_res, unit, lightload);
     if lightload then -- Non ho interpretato le variabili, le imposto da qua
         interp:setEnv(code_source.variables);
     end
