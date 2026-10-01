@@ -35,9 +35,6 @@ Industria.iounits = {
 ---This section is not serialized to disk, it's filled when the world is loaded or when
 ---new units are created or removed.
 Industria.runtime = {
-    ---Unità corrente: il ciclo di esecuzione esegue un'unità alla volta: imposta questa
-    ---variabile all'unità che è in esecuzione
-    current_unit = nil,
     ---Contiene tutte le unità caricate/create: se un unità non è
     ---presente in questa tabella allora non può essere avviata a runtime
     ---

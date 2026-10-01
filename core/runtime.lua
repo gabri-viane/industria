@@ -9,6 +9,37 @@ end
 
 local fnresult = Industria.commons.fnresult;
 
+local runtime_groups = {
+    current_group = 0,
+    max_groups = 10,
+    ---@type table<Controller,number>
+    controllers_group = {},
+    registerController = function(self, controller)
+        if self.current_group == 0 then
+            self.controllers_group[controller] = (self.max_groups - 1)
+        else
+            self.controllers_group[controller] = self.current_group - 1
+        end
+    end,
+    unregisterController = function(self, controller)
+        self.controllers_group[controller] = nil
+    end,
+    nextGroup = function(self)
+        ---@type table<Controller>
+        local cntrls = {}
+        for key, value in pairs(self.controllers_group) do
+            if value == self.current_group then
+                table.insert(cntrls, key)
+            end
+        end
+        self.current_group = self.current_group + 1
+        if self.current_group >= self.max_groups then
+            self.current_group = 0
+        end
+        return cntrls
+    end
+}
+
 ---Register an error (usually interpreter ones) to the Unit
 ---@param ctrl_code string|nil The unit code to which add the error
 ---@param message string the error message
@@ -85,6 +116,7 @@ function Industria.runtime:enableController(controller)
     self.runtime_units[unit_code].enabled = true;
     --Infine abilito l'unità se tutto è andato bene
     controller.enabled = true;
+    runtime_groups:registerController(controller)
 
     return fnresult(true, nil, nil);
 end
@@ -113,6 +145,7 @@ function Industria.runtime:disableController(controller)
     if self.runtime_units[unit_code].interp ~= nil and self.runtime_units[unit_code].interp.init ~= nil then --Resetto env
         self.runtime_units[unit_code].interp:init();
     end
+    runtime_groups:unregisterController(controller)
     return fnresult(true, nil, nil);
 end
 
@@ -197,6 +230,9 @@ function Industria.runtime:createInterpreter(controller, load_init)
         f:close();
         --Imposta l'environment caricato
         res_interpreter.data:setEnv(controller.last_env);
+        if controller.enabled then
+            runtime_groups:registerController(controller);
+        end
     end
 
     --Controllo se avevo delle IOUnits che erano precedentemente collegate e le scollego
@@ -273,28 +309,32 @@ function Industria.runtime:saveCurrentEnv()
 end
 
 core.register_globalstep(function(dtime)
-    for key, value in pairs(Industria.runtime.runtime_units) do
-        if value ~= nil and value.enabled and value.interp ~= nil then
-            --Imposto l'unità corrente su cui sto lavorando (in questo modo le
-            --funzioni del codice ST si riferiranno a questà unità: come la chiamata
-            --alla funzione PRINT)
-            local unit = value.interp:getUnit();
-            if value.interp.cycle == nil and --Prendo l'unità
-                unit ~= nil then             --Se esiste la disabilito
-                Industria.runtime:disableController(unit);
-            else
-                local th = coroutine.create(function()
-                    Industria.runtime.iounits:executeCopy(value.interp, unit, 0)
-                    local ok, err3, cur_env, stats = value.interp:cycle();
-                    --TODO: cur_env deve essere passato a tutte le unità in ascolto per le uscite e input
-                    if not ok and        --Errore nell'esecuzione del ciclo dell'unità
-                        unit ~= nil then --Se esiste la disabilito
-                        Industria.runtime:disableController(unit);
-                    else
-                        Industria.runtime.iounits:executeCopy(value.interp, unit, 1)
-                    end
-                end)
-                coroutine.resume(th);
+    local cntrls = runtime_groups:nextGroup();
+    for _, cntrl in ipairs(cntrls) do --Industria.runtime.runtime_units
+        if cntrl ~= nil and cntrl.enabled then
+            local value = Industria.runtime.runtime_units[Industria.controllers.getControllerCode(cntrl)]
+            if value.interp ~= nil then
+                --Imposto l'unità corrente su cui sto lavorando (in questo modo le
+                --funzioni del codice ST si riferiranno a questà unità: come la chiamata
+                --alla funzione PRINT)
+                local unit = value.interp:getUnit();
+                if value.interp.cycle == nil and --Prendo l'unità
+                    unit ~= nil then         --Se esiste la disabilito
+                    Industria.runtime:disableController(unit);
+                else
+                    local th = coroutine.create(function()
+                        Industria.runtime.iounits:executeCopy(value.interp, unit, 0)
+                        local ok, err3, cur_env, stats = value.interp:cycle();
+                        --TODO: cur_env deve essere passato a tutte le unità in ascolto per le uscite e input
+                        if not ok and    --Errore nell'esecuzione del ciclo dell'unità
+                            unit ~= nil then --Se esiste la disabilito
+                            Industria.runtime:disableController(unit);
+                        else
+                            Industria.runtime.iounits:executeCopy(value.interp, unit, 1)
+                        end
+                    end)
+                    coroutine.resume(th);
+                end
             end
         end
     end
