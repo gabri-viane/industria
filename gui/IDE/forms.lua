@@ -25,6 +25,24 @@ local OutputForm = function(playerdata, as_form)
     end
 end
 
+local OptionsForm = function(playerdata, as_form)
+    if as_form then
+        return table.concat({ "formspec_version[11]"
+        , "size[3.5,1.25]"
+        , "box[0,0;3.5,1.25;#555555]"
+        , "image_button[0.25,0.25;0.75,0.75;industria_fs_save.png;save;;false;false;]"
+        , "image_button[1.25,0.25;0.75,0.75;industria_fs_build.png;build;;false;false;]"
+        , "image_button[2.25,0.25;0.75,0.75;industria_fs_build_download.png;buildanddownload;;false;false;]"
+        , });
+    else
+        return table.concat({ "box[0,0;3.5,1.25;#555555]"
+        , "image_button[0.25,0.25;0.75,0.75;industria_fs_save.png;save;;false;false;]"
+        , "image_button[1.25,0.25;0.75,0.75;industria_fs_build.png;build;;false;false;]"
+        , "image_button[2.25,0.25;0.75,0.75;industria_fs_build_download.png;buildanddownload;;false;false;]"
+        , });
+    end
+end
+
 local CodingForm = function(playerdata, as_form)
     if not playerdata.code then
         playerdata.code = ""
@@ -109,6 +127,9 @@ Industria.formspecs.IDE.forms.MainIDE = function(playerdata)
     , "size[32,18]"
     , "container[0.25,0.25]" --Pannello di sinistra
     , VariableForm(playerdata, false)
+    , "container_end[]"
+    , "container[0.25,12.25]" --Pannello di sinistra
+    , OptionsForm(playerdata, false)
     , "container_end[]"
     , "container[5.4,0.25]" --Pannello centrale
     , CodingForm(playerdata, false)

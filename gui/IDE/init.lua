@@ -64,6 +64,7 @@ dofile(Industria.path .. "/gui/IDE/IDEMain.lua");
 dofile(Industria.path .. "/gui/IDE/IDEVariableForm.lua");
 dofile(Industria.path .. "/gui/IDE/IDEOutputForm.lua");
 dofile(Industria.path .. "/gui/IDE/IDECodeForm.lua");
+dofile(Industria.path .. "/gui/IDE/IDEOptionsForm.lua");
 
 ---Chiude il form al giocatore.
 ---@param playername string Giocatore a cui chiudere il formspec

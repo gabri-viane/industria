@@ -37,6 +37,7 @@ function Industria.formspecs.IDE.callbacks:STMainIDECallback(player_name, fields
     Industria.formspecs.IDE.callbacks:VariableFormCallback(player_name, fields, playerdata);
     Industria.formspecs.IDE.callbacks:OutputFormCallback(player_name, fields, playerdata);
     Industria.formspecs.IDE.callbacks:CodeFormCallback(player_name, fields, playerdata);
+    Industria.formspecs.IDE.callbacks:OptionsFormCallback(player_name, fields, playerdata);
 
     --Aggiorno il formspec
     Industria.formspecs.IDE:refresh(player_name);
