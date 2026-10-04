@@ -5,7 +5,7 @@ local fnresult = Industria.commons.fnresult
 ---@alias InputOutputFunction fun(iounit: IOUnit, value: any): any
 
 ---Create the states for an IOUnit like a builder class. The states represents what kind of properties the IOUnit has and can share with the Control Units.
----@param iounit_name iounitname The name of type of IOUnit to register
+---@param iounit_name IOUnitName The name of type of IOUnit to register
 ---@return IOBuilder #The builder itself
 function Industria.IOStatesBuilder(iounit_name)
     ---@class IOBuilder
@@ -105,23 +105,23 @@ function Industria.IOStatesBuilder(iounit_name)
 
     ---Register the states for the IOUnit
     function IOBuilder:register()
-        Industria.runtime.iounits.states[iounit_name] = self.states_props;
+        Industria.runtime.iounits.definitions[iounit_name] = self.states_props;
     end
 
     return IOBuilder
 end
 
 ---Register a Node as an IOUnit. An IOUnit must be previosuly defined by it's states with Industria.IOStatesBuilder
----@param iounit_name iounitname The unit name (such as button, lamp, lever, ...) which defines the states available for the IOUnit
+---@param iounit_name IOUnitName The unit name (such as button, lamp, lever, ...) which defines the states available for the IOUnit
 ---@param node_name string The name of the node that will be passed to core.register_node
 ---@param node_definition table The definition of the node that will be passed to core.register_node . The definition will be altered by adding industria_props and the group definitio industria_iounit
 ---@param after_place_callback function|nil Function to pass to the callback of the node
 ---@param after_dig_callback function|nil Function to pass to the callback of the node
 function Industria.registerIOUnitNode(iounit_name, node_name, node_definition,
                                   after_place_callback, after_dig_callback)
-    if not Industria.runtime.iounits.states[iounit_name] then
+    if not Industria.runtime.iounits.definitions[iounit_name] then
         error("Unregisterd IOUnit: requested to register the node '" ..
-            node_name .. "' as an undefined IOUnit '" .. iounit_name "'")
+            node_name .. "' as an undefined IOUnit '" .. iounit_name .. "'")
     end
     --Aggiungo le informazioni per la IOUnit
     if not node_definition.industria_props then
