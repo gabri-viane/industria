@@ -32,8 +32,6 @@ function Industria.formspecs.callbacks:ControllerIDInputCallback(player_name, fi
         Industria.formspecs:setPlayerStatus(player_name, nil, nil);
         coreCloseFormSpec(player_name, FSKeyCode);
         return;
-    else
-
     end
 
     if fields.setid or fields.key_enter_field == "controllerID" then

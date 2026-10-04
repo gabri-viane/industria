@@ -29,7 +29,7 @@ function Industria.formspecs.IDE:getIDEData(playername)
     return fnresult(true, nil, data)
 end
 
----Aggiorna la playerdata (FSPlayerStatus) e imposta il formspec visualizato a FSKyeCode
+---Aggiorna la playerdata (FSPlayerStatus) e imposta il formspec visualizato a FSKeyCode
 ---@param playername string
 ---@param data IDEData
 function Industria.formspecs.IDE:updateIDEData(playername, data)

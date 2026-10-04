@@ -6,7 +6,7 @@ local sendPlayerMsg = core.chat_send_player;
 function Industria.formspecs.IDE.callbacks:STMainIDECallback(player_name, fields)
     local playerdata = Industria.formspecs:getPlayerStatus(player_name).data;
     local unitcode = playerdata.ctrl_code
-    local variables = playerdata.variables or {}
+    --local variables = playerdata.variables or {}
 
     ---Controlla di chi è l'unità
     ---@param unit Controller

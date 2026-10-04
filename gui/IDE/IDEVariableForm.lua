@@ -63,4 +63,15 @@ function Industria.formspecs.IDE.callbacks:VariableFormCallback(player_name, fie
 
         Industria.formspecs.IDE:updateIDEData(player_name, playerdata);
     end
+
+    if fields.rembtn then
+        --Validazione del nome della variabile
+        if fields.remvarname and Industria.commons.isValidVarname(fields.remvarname) then
+            playerdata.variables[Industria.commons.strtrim(fields.remvarname)] = nil
+        else
+            table.insert(playerdata.output, "[ERR] Can't remove variable: Invalid Name")
+        end
+
+        Industria.formspecs.IDE:updateIDEData(player_name, playerdata);
+    end
 end

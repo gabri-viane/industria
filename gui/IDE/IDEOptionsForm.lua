@@ -1,10 +1,4 @@
 ---comment
----@param playerdata IDEData
-local function buildCode(playerdata)
-
-end
-
----comment
 ---@param player_name any
 ---@param fields any
 ---@param playerdata IDEData
@@ -51,5 +45,4 @@ function Industria.formspecs.IDE.callbacks:OptionsFormCallback(player_name, fiel
         end
         Industria.formspecs.IDE:updateIDEData(player_name, playerdata);
     end
-    
 end

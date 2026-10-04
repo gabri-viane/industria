@@ -24,6 +24,9 @@ local runtime_groups = {
     unregisterController = function(self, controller)
         self.controllers_group[controller] = nil
     end,
+    ---Get next group of controllers to be executed
+    ---@param self any
+    ---@return table<Controller>
     nextGroup = function(self)
         ---@type table<Controller>
         local cntrls = {}
@@ -319,21 +322,18 @@ core.register_globalstep(function(dtime)
                 --alla funzione PRINT)
                 local unit = value.interp:getUnit();
                 if value.interp.cycle == nil and --Prendo l'unità
-                    unit ~= nil then         --Se esiste la disabilito
+                    unit ~= nil then             --Se esiste la disabilito
                     Industria.runtime:disableController(unit);
                 else
-                    local th = coroutine.create(function()
-                        Industria.runtime.iounits:executeCopy(value.interp, unit, 0)
-                        local ok, err3, cur_env, stats = value.interp:cycle();
-                        --TODO: cur_env deve essere passato a tutte le unità in ascolto per le uscite e input
-                        if not ok and    --Errore nell'esecuzione del ciclo dell'unità
-                            unit ~= nil then --Se esiste la disabilito
-                            Industria.runtime:disableController(unit);
-                        else
-                            Industria.runtime.iounits:executeCopy(value.interp, unit, 1)
-                        end
-                    end)
-                    coroutine.resume(th);
+                    Industria.runtime.iounits:executeCopy(value.interp, unit, 0)
+                    local ok, err3, cur_env, stats = value.interp:cycle();
+                    --TODO: cur_env deve essere passato a tutte le unità in ascolto per le uscite e input
+                    if not ok and        --Errore nell'esecuzione del ciclo dell'unità
+                        unit ~= nil then --Se esiste la disabilito
+                        Industria.runtime:disableController(unit);
+                    else
+                        Industria.runtime.iounits:executeCopy(value.interp, unit, 1)
+                    end
                 end
             end
         end
