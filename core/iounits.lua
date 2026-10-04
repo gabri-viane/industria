@@ -235,7 +235,8 @@ function Industria.iounits:registerIOUnit(owner, pos)
         reference_controller = nil,
         io_ports = io_ports,
         pos_block = pos,
-        linked_properties = {}
+        linked_properties = {},
+        node_name = node.name
     };
     self.registered[iounit_code] = iounit;
 

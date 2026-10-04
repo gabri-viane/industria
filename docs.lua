@@ -25,7 +25,7 @@
 ---@alias IOPropertyList table<IOPropertyName, IOProperty> Tabella nome stato - attributi stato
 
 ---@alias Controller {controller_id : ControllerID, pos: Position, owner : owner, reference_program : reference_program, last_env : Environment, enabled : boolean, protected : boolean, linked_iounits:IOLinks} Unità/Controllore
----@alias IOUnit {iounit_name: IOUnitName, iounit_code : IOUnitCODE, owner : owner, reference_controller : ControllerCODE | nil, pos_block: any, io_ports: table<IOPropertyName,IOPort>, linked_properties: table<varname,IOPropertyName>} Unità/Controllore
+---@alias IOUnit {iounit_name: IOUnitName, iounit_code : IOUnitCODE, owner : owner, reference_controller : ControllerCODE | nil, pos_block: any, io_ports: table<IOPropertyName,IOPort>, linked_properties: table<varname,IOPropertyName>, node_name:string} Unità/Controllore
 
 ---@alias RTInfo {enabled:boolean,interp: Interpreter|nil,errors:string[]}
 

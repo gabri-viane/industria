@@ -291,6 +291,7 @@ function Industria.runtime:unregisterControllerFromRuntime(controller)
     end
     --Rimuovo dal runtime
     self.runtime_units[unit_code] = nil;
+    runtime_groups:unregisterController(controller)
     return fnresult(true, "Unit removed from runtime environment.");
 end
 
@@ -316,7 +317,7 @@ core.register_globalstep(function(dtime)
     for _, cntrl in ipairs(cntrls) do --Industria.runtime.runtime_units
         if cntrl ~= nil and cntrl.enabled then
             local value = Industria.runtime.runtime_units[Industria.controllers.getControllerCode(cntrl)]
-            if value.interp ~= nil then
+            if value and value.interp ~= nil then
                 --Imposto l'unità corrente su cui sto lavorando (in questo modo le
                 --funzioni del codice ST si riferiranno a questà unità: come la chiamata
                 --alla funzione PRINT)
