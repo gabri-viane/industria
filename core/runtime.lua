@@ -12,9 +12,27 @@ local fnresult = Industria.commons.fnresult;
 local runtime_groups = {
     current_group = 0,
     max_groups = 10,
+
+    ---Per ottimizzare la ricerca nei gruppi evito di creare ad ogni ciclo di globalstep la tabella di controllori del gruppo
+    ---ma creo un "cache" che viene invalidata se viene aggiunto o rimosso un controllore da un gruppo.
+    ---Ogni numero rappresenta un gruppo e per ogni numero è associata la tabella di controllori.
+    ---@type table<number,table<Controller>>
+    cached_table = {},
+    ---Indica se un gruppo, identificato da un numero, è ancora valida la sua cache oppure no: se un controllore è
+    ---stato aggiunto o rimosso allora la cache non è più valida per il gruppo
+    ---@type table<number,boolean>
+    is_cache_fresh = {},
+
+    ---Rappresenta l'abbinamento tra controllore e il proprio gruppo di esecuzione: un controllore è aggiunto ad un gruppo solo se è
+    ---abilitato. Il controllo a runtime dell'abilitazione è comunque fatto.
     ---@type table<Controller,number>
     controllers_group = {},
+    ---Registra un controllore al gruppo di esecuzione che si verifica tra max_groups chiamate di globalstep. Questa funzione invalida la
+    ---cache del gruppo a cui viene aggiunto.
+    ---@param self any
+    ---@param controller Controller Controllore da registrare
     registerController = function(self, controller)
+        self.is_cache_fresh[self.current_group - 1] = false;
         if self.current_group == 0 then
             self.controllers_group[controller] = (self.max_groups - 1)
         else
@@ -22,6 +40,7 @@ local runtime_groups = {
         end
     end,
     unregisterController = function(self, controller)
+        self.is_cache_fresh[self.controllers_group[controller]] = false;
         self.controllers_group[controller] = nil
     end,
     ---Get next group of controllers to be executed
@@ -30,11 +49,21 @@ local runtime_groups = {
     nextGroup = function(self)
         ---@type table<Controller>
         local cntrls = {}
-        for key, value in pairs(self.controllers_group) do
-            if value == self.current_group then
-                table.insert(cntrls, key)
+
+        -- Controllo se ho già la tabella di controllori del gruppo pronta per essere utilizzata
+        if self.is_cache_fresh[self.current_group] then
+            cntrls = self.cached_table[self.current_group]
+        else
+            -- Se non è pronta allora la creo nuova e la imposto
+            for key, value in pairs(self.controllers_group) do
+                if value == self.current_group then
+                    table.insert(cntrls, key)
+                end
             end
+            self.cached_table[self.current_group] = cntrls
+            self.is_cache_fresh[self.current_group] = true
         end
+        -- Aggiorno il gruppo per la prossima esecuzione
         self.current_group = self.current_group + 1
         if self.current_group >= self.max_groups then
             self.current_group = 0
